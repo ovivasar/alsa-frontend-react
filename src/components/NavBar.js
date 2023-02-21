@@ -11,8 +11,11 @@ import WhereToVoteIcon from '@mui/icons-material/WhereToVote';
 import QrCodeIcon from '@mui/icons-material/QrCode';
 import { blueGrey } from '@mui/material/colors';
 
-export default function NavBar() {
+import { useState,useEffect, useRef, Component, useMemo, useCallback } from 'react';
+
+export default function NavBar(props) {
   const navigate  = useNavigate();
+  //const [fecha_proceso, setFechaProceso] = useState("");
 
   return (
     <Box sx={{ flexGrow:1 }} >
@@ -32,7 +35,7 @@ export default function NavBar() {
                     <IconButton  sx={{ flexGrow:1,color: blueGrey[300] }}
                         aria-label="upload picture" component="label" size="large"
                                 onClick = {()=> {
-                                  navigate(`/venta`);
+                                  navigate(`/venta/${props.fecha_proceso}`);
                                                 }
                                 }
                     >
@@ -42,7 +45,7 @@ export default function NavBar() {
                     <IconButton  sx={{ flexGrow:1,color: blueGrey[300] }}
                         aria-label="upload picture" component="label" size="large"
                                 onClick = {()=> {
-                                  navigate(`/ocargadet`);
+                                  navigate(`/ocargadet/${props.fecha_proceso}`);
                                                 }
                                 }
                     >

@@ -8,6 +8,7 @@ import FindIcon from '@mui/icons-material/FindInPage';
 import DeleteIcon from '@mui/icons-material/Delete';
 import UpdateIcon from '@mui/icons-material/UpdateSharp';
 import IconButton from '@mui/material/IconButton';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 
 import DateFnsUtils from '@date-io/date-fns';
 import swal from 'sweetalert';
@@ -251,6 +252,14 @@ export default function VentaForm() {
                   </Grid>
                   
                   <Grid item xs={0.5}>
+                    <IconButton color="primary" aria-label="upload picture" component="label" size="small"
+                                onClick = {()=> navigate(`/ventadettrans/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)}
+                    >
+                      <LocalShippingIcon />
+                    </IconButton>
+                  </Grid>
+                  
+                  <Grid item xs={0.5}>
                     <IconButton color="warning" aria-label="upload picture" component="label" size="small"
                                 onClick = { () => confirmaEliminacionDet(indice.comprobante_original_codigo
                                                                           ,indice.comprobante_original_serie
@@ -262,6 +271,7 @@ export default function VentaForm() {
                       <DeleteIcon />
                     </IconButton>
                   </Grid>
+
 
                   <Grid item xs={1.5}>
                       <Typography fontSize={15} marginTop="0rem" >
@@ -353,7 +363,7 @@ export default function VentaForm() {
                                       value={venta.tipo_op}
                                       name="tipo_op"
                                       sx={{display:'block',
-                                      margin:'.5rem 0'}}
+                                      margin:'.5rem 0', color:"white"}}
                                       label="Operacion"
                                       onChange={handleChange}
                                     >
@@ -382,7 +392,7 @@ export default function VentaForm() {
                                       value={venta.id_zona_venta}
                                       name="id_zona_venta"
                                       sx={{display:'block',
-                                      margin:'.5rem 0'}}
+                                      margin:'.5rem 0', color:"white"}}
                                       label="Zona"
                                       onChange={handleChange}
                                       onClick = {  ()=>{
@@ -436,7 +446,7 @@ export default function VentaForm() {
                                       value={venta.id_vendedor}
                                       name="id_vendedor"
                                       sx={{display:'block',
-                                      margin:'.5rem 0'}}
+                                      margin:'.5rem 0', color:"white"}}
                                       label="Vendedor"
                                       onChange={handleChange}
                                       inputProps={{ style:{color:'white'} }}
@@ -466,7 +476,7 @@ export default function VentaForm() {
                                       value={venta.documento_id}
                                       name="documento_id"
                                       sx={{display:'block',
-                                      margin:'.5rem 0'}}
+                                      margin:'.5rem 0', color:"white"}}
                                       label="Cliente"
                                       onChange={handleChange}
                                     >

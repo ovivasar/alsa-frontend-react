@@ -82,7 +82,7 @@ export default function OCargaFormDet() {
       var resultadosBusqueda = [];
       
       resultadosBusqueda = tabladet.filter((elemento) => {
-        if (elemento.razon_social.toString().toLowerCase().includes(strBusca.toLowerCase())
+        if (elemento.ref_razon_social.toString().toLowerCase().includes(strBusca.toLowerCase())
       //   || elemento.pedido.toString().toLowerCase().includes(strBusca.toLowerCase())
          || elemento.nombre.toString().toLowerCase().includes(strBusca.toLowerCase())
           ){
@@ -105,7 +105,7 @@ export default function OCargaFormDet() {
       sortable: true
     },
     { name:'RAZON_SOCIAL', 
-      selector:row => row.razon_social,
+      selector:row => row.ref_razon_social,
       sortable: true
     },
     { name:'IDPRODUCTO', 
@@ -157,8 +157,8 @@ export default function OCargaFormDet() {
       strProducto = selectedRows.map(r => r.nombre);
       strIdZonaEntrega = selectedRows.map(r => r.id_zona_entrega);
       strZonaEntrega = selectedRows.map(r => r.zona_entrega);
-      strDocumentoId = selectedRows.map(r => r.documento_id);
-      strRazonSocial = selectedRows.map(r => r.razon_social);
+      strDocumentoId = selectedRows.map(r => r.ref_documento_id);
+      strRazonSocial = selectedRows.map(r => r.ref_razon_social);
 
       //console.log(strPedido[0]);
       //ojo: cuando llega la variable ,desde un filtro en automatico, llega como array unitario, pero array
@@ -168,8 +168,8 @@ export default function OCargaFormDet() {
       ocargaDet.descripcion = strProducto[0];
       ocargaDet.id_zona_entrega = strIdZonaEntrega[0];
       ocargaDet.zona_entrega = strZonaEntrega[0];
-      ocargaDet.documento_id = strDocumentoId[0];
-      ocargaDet.razon_social= strRazonSocial[0];
+      ocargaDet.ref_documento_id = strDocumentoId[0];
+      ocargaDet.ref_razon_social= strRazonSocial[0];
 
       setToggleCleared(!toggleCleared);
       //Cerrar Modal
@@ -215,8 +215,8 @@ export default function OCargaFormDet() {
   const [updateTrigger, setUpdateTrigger] = useState({});
   const [razonSocialBusca, setRazonSocialBusca] = useState("");
     //funcion para mostrar data de formulario, modo edicion
-  const mostrarRazonSocialBusca = async (documento_id) => {
-      const res = await fetch(`https://apiperu.dev/api/ruc/${documento_id}`, {
+  const mostrarRazonSocialBusca = async (ref_documento_id) => {
+      const res = await fetch(`https://apiperu.dev/api/ruc/${ref_documento_id}`, {
         method: "GET",
         headers: {"Content-Type":"application/json",
                   "Authorization": "Bearer " + "f03875f81da6f2c2f2e29f48fdf798f15b7a2811893ad61a1e97934a665acc8b"
@@ -269,20 +269,14 @@ export default function OCargaFormDet() {
       operacion:'',
       ticket:'',
       guia:'',
-      tr_ruc:'',
-      tr_razon_social:'',
-      tr_chofer:'',
-      tr_celular:'',
-      tr_placa:'',
-      tr_celular:'',
       
       pedido:'',  //ref_cod, ref_serie, ref_numero, item
       id_zona_entrega:'',
       zona_entrega:'',
       id_producto:'',
       descripcion:'',
-      documento_id:'',
-      razon_social:'',
+      ref_documento_id:'',
+      ref_razon_social:'',
       desag_sacos:'',
       desag_tn:'',
       llega_sacos:'',
@@ -420,11 +414,11 @@ export default function OCargaFormDet() {
       setocargaDet({...ocargaDet, [e.target.name]: e.target.value, descripcion:sTexto});
       return;
     }
-    if (e.target.name === "documento_id") {
+    if (e.target.name === "ref_documento_id") {
       const arrayCopia = cliente_select.slice();
-      index = arrayCopia.map(elemento => elemento.documento_id).indexOf(e.target.value);
-      sTexto = arrayCopia[index].razon_social;
-      setocargaDet({...ocargaDet, [e.target.name]: e.target.value, razon_social:sTexto});
+      index = arrayCopia.map(elemento => elemento.ref_documento_id).indexOf(e.target.value);
+      sTexto = arrayCopia[index].ref_razon_social;
+      setocargaDet({...ocargaDet, [e.target.name]: e.target.value, ref_razon_social:sTexto});
       return;
     }
 
@@ -452,17 +446,12 @@ export default function OCargaFormDet() {
                 operacion:data.operacion,
                 ticket:data.ticket,
                 guia:data.guia,
-                tr_ruc:data.tr_ruc,
-                tr_razon_social:data.tr_razon_social,
-                tr_chofer:data.tr_chofer,
-                tr_celular:data.tr_celular,
-                tr_placa:data.tr_placa,
                 id_zona_entrega:data.id_zona_entrega,
                 zona_entrega:data.zona_entrega,
                 id_producto:data.id_producto,
                 descripcion:data.descripcion,
-                documento_id:data.documento_id,
-                razon_social:data.razon_social,
+                ref_documento_id:data.ref_documento_id,
+                ref_razon_social:data.ref_razon_social,
                 desag_sacos:data.desag_sacos,
                 desag_tn:data.desag_tn,
                 llega_sacos:data.llega_sacos,
@@ -770,9 +759,9 @@ export default function OCargaFormDet() {
                                               >Cliente</InputLabel>
                                               <Select
                                                 labelId="cliente_select"
-                                                id={ocargaDet.documento_id}
-                                                value={ocargaDet.documento_id}
-                                                name="documento_id"
+                                                id={ocargaDet.ref_documento_id}
+                                                value={ocargaDet.ref_documento_id}
+                                                name="ref_documento_id"
                                                 sx={{display:'block',
                                                 margin:'.5rem 0'}}
                                                 label="Cliente"
@@ -780,8 +769,8 @@ export default function OCargaFormDet() {
                                               >
                                                 {   
                                                     cliente_select.map(elemento => (
-                                                    <MenuItem key={elemento.documento_id} value={elemento.documento_id}>
-                                                      {elemento.razon_social}
+                                                    <MenuItem key={elemento.ref_documento_id} value={elemento.documento_id}>
+                                                      {elemento.ref_razon_social}
                                                     </MenuItem>)) 
                                                 }
                                               </Select>
@@ -969,71 +958,6 @@ export default function OCargaFormDet() {
                                       justifyContent="center"
                             >
 
-                              <Grid item xs={2}>
-                                  <TextField variant="outlined" 
-                                        label="TRANS: RUC"
-                                        sx={{display:'block',
-                                              margin:'.5rem 0'}}
-                                        //sx={{mt:-3}}
-                                        name="tr_ruc"
-                                        value={ocargaDet.tr_ruc}
-                                        onChange={handleChange}
-                                        inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                        InputLabelProps={{ style:{color:'white'} }}
-                                  />
-                                </Grid>
-                                <Grid item xs={2.8}>
-                                  <TextField variant="outlined" 
-                                        label=" TRANS: RAZON SOCIAL"
-                                        sx={{display:'block',
-                                              margin:'.5rem 0'}}
-                                        //sx={{mt:-3}}
-                                        name="tr_razon_social"
-                                        value={ocargaDet.tr_razon_social}
-                                        onChange={handleChange}
-                                        inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                        InputLabelProps={{ style:{color:'white'} }}
-                                  />
-                                </Grid>
-                                <Grid item xs={2}>
-                                  <TextField variant="outlined" 
-                                        label=" TRANS: CHOFER"
-                                        sx={{display:'block',
-                                              margin:'.5rem 0'}}
-                                        //sx={{mt:-3}}
-                                        name="tr_chofer"
-                                        value={ocargaDet.tr_chofer}
-                                        onChange={handleChange}
-                                        inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                        InputLabelProps={{ style:{color:'white'} }}
-                                  />
-                                </Grid>
-                                <Grid item xs={2}>
-                                  <TextField variant="outlined" 
-                                        label=" TRANS: CELULAR"
-                                        sx={{display:'block',
-                                              margin:'.5rem 0'}}
-                                        //sx={{mt:-3}}
-                                        name="tr_celular"
-                                        value={ocargaDet.tr_celular}
-                                        onChange={handleChange}
-                                        inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                        InputLabelProps={{ style:{color:'white'} }}
-                                  />
-                                </Grid>
-                                <Grid item xs={2}>
-                                  <TextField variant="outlined" 
-                                        label=" TRANS: PLACA"
-                                        sx={{display:'block',
-                                              margin:'.5rem 0'}}
-                                        //sx={{mt:-3}}
-                                        name="tr_placa"
-                                        value={ocargaDet.tr_placa}
-                                        onChange={handleChange}
-                                        inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                        InputLabelProps={{ style:{color:'white'} }}
-                                  />
-                                </Grid>
                                 <Grid item xs={1.2}>
                                     <Button variant='contained' 
                                         color='primary' 

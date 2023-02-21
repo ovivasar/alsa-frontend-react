@@ -7,8 +7,23 @@ import IconButton from '@mui/material/IconButton';
 import React from 'react';
 
 export default function VentaFormDet() {
-//export class VentaForm extends Component {
+
+  //export class VentaForm extends Component {
   //experimento
+  const [unidad_select] = useState([
+    {unidad_medida:'TN'},
+    {unidad_medida:'BLS'}
+  ]);
+
+  const [cond_venta_select] = useState([
+    {cond_venta:'PESO LLEGADA'},
+    {cond_venta:'PESO PARTIDA'}
+  ]);
+  const [cond_entrega_select] = useState([
+    {cond_entrega:'PUESTO EN ALMACEN'},
+    {cond_entrega:'RECOGIDO POR CLIENTE'}
+  ]);
+
   const [updateTrigger, setUpdateTrigger] = useState({});
   const [razonSocialBusca, setRazonSocialBusca] = useState("");
     //funcion para mostrar data de formulario, modo edicion
@@ -37,6 +52,7 @@ export default function VentaFormDet() {
   //Select(Combos) para llenar, desde tabla
   const [zonaentrega_select,setZonaEntregaSelect] = useState([]);
   const [producto_select,setProductoSelect] = useState([]);
+  const [formapago_select,setFormaPagoSelect] = useState([]);
 
   const [cargando,setCargando] = useState(false);
   const [editando,setEditando] = useState(false);
@@ -59,9 +75,16 @@ export default function VentaFormDet() {
       item:params.item,
       ref_documento_id:'',  
       ref_razon_social:'',  
+      ref_direccion:'',   //new
+      unidad_medida:'',   //new
       id_zona_entrega:'',
       zona_entrega:'',
-      id_lote:'',
+      id_formapago:'', //new
+      formapago:'',   //new
+      cond_venta:'',  //new
+      cond_entrega:'', //new
+      fecha_entrega2:'', //new
+      id_producto:'',
       descripcion:'',
       precio_unitario:'',
       porc_igv:'',
@@ -108,6 +131,8 @@ export default function VentaFormDet() {
     
     cargaZonaEntregaCombo();
     cargaProductoCombo();
+    cargaFormaPagoCombo();
+
     //console.log(fecha_actual);
   },[params.cod, updateTrigger]);
 
@@ -131,6 +156,16 @@ export default function VentaFormDet() {
         console.log(error);
     });
   }
+  const cargaFormaPagoCombo = () =>{
+    axios
+    .get('http://localhost:4000/formapago')
+    .then((response) => {
+        setFormaPagoSelect(response.data);
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+  }
 
   //Rico evento change
   const handleChange = e => {
@@ -143,16 +178,32 @@ export default function VentaFormDet() {
       setVentaDet({...ventaDet, [e.target.name]: e.target.value, zona_entrega:sTexto});
       return;
     }
-    if (e.target.name === "id_lote") {
+    if (e.target.name === "id_producto") {
       const arrayCopia = producto_select.slice();
-      index = arrayCopia.map(elemento => elemento.id_lote).indexOf(e.target.value);
+      index = arrayCopia.map(elemento => elemento.id_producto).indexOf(e.target.value);
       sTexto = arrayCopia[index].nombre;
       setVentaDet({...ventaDet, [e.target.name]: e.target.value, descripcion:sTexto});
       return;
     }
+    if (e.target.name === "id_formapago") {
+      const arrayCopia = formapago_select.slice();
+      index = arrayCopia.map(elemento => elemento.id_formapago).indexOf(e.target.value);
+      sTexto = arrayCopia[index].nombre;
+      setVentaDet({...ventaDet, [e.target.name]: e.target.value, formapago:sTexto});
+      return;
+    }
+
     //Para todos los demas casos ;)
     setVentaDet({...ventaDet, [e.target.name]: e.target.value});
   }
+
+  const mostrarIgvProducto = async (cod) => {
+    const res = await fetch(`http://localhost:4000/productoigv/${cod}`);
+    const datosjson = await res.json();
+    console.log(datosjson);
+    ventaDet.porc_igv = datosjson.porc_igv;
+    console.log(ventaDet.porc_igv);
+  };
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarVenta = async (cod,serie,num,elem,item) => {
@@ -162,9 +213,16 @@ export default function VentaFormDet() {
     setVentaDet({  
                 ref_documento_id:data.ref_documento_id,  
                 ref_razon_social:data.ref_razon_social,  
+                ref_direccion:data.ref_direccion,  
+                unidad_medida:data.unidad_medida,  
                 id_zona_entrega:data.id_zona_entrega,
                 zona_entrega:data.zona_entrega,
-                id_lote:data.id_lote,
+                id_formapago:data.id_formapago, //new
+                formapago:data.formapago,       //new
+                cond_venta:data.cond_venta,       //new
+                cond_entrega:data.cond_entrega,   //new
+                fecha_entrega2:data.fecha_entrega2,   //new
+                id_producto:data.id_producto,
                 descripcion:data.descripcion,
                 precio_unitario:data.precio_unitario,
                 porc_igv:data.porc_igv,
@@ -202,9 +260,10 @@ export default function VentaFormDet() {
                     <form onSubmit={handleSubmit} >
 
                     <Grid container spacing={0.5}>
-                        <Grid item xs={9}>
+                        <Grid item xs={4}>
                             <TextField variant="outlined" 
                                       label="RUC Facturacion"
+                                      //size="small"
                                       //sx={{display:'block',
                                       //      margin:'.5rem 0'}}
                                       sx={{mt:-1}}
@@ -215,7 +274,7 @@ export default function VentaFormDet() {
                                       InputLabelProps={{ style:{color:'white'} }}
                             />
                         </Grid>
-                        <Grid item xs={2}>
+                        <Grid item xs={8}>
                             <IconButton color="warning" aria-label="upload picture" component="label" size="small"
                               //sx={{display:'block',
                               //margin:'1rem 0'}}
@@ -223,6 +282,8 @@ export default function VentaFormDet() {
                               onClick = { () => {
                                   ventaDet.ref_razon_social = "";
                                   mostrarRazonSocialBusca(ventaDet.ref_documento_id);
+                                  ventaDet.porc_igv = "";
+                                  mostrarIgvProducto(ventaDet.id_producto);
                                 }
                               }
                             >
@@ -231,9 +292,11 @@ export default function VentaFormDet() {
                         </Grid>
 
                     </Grid>
-
+                    
                             <TextField variant="outlined" 
                                       label="RAZON SOCIAL Fact."
+                                      fullWidth
+                                      //size="small"
                                       sx={{display:'block',
                                             margin:'.5rem 0'}}
                                       //sx={{mt:-3}}
@@ -244,7 +307,21 @@ export default function VentaFormDet() {
                                       inputProps={{ style:{color:'white'} }}
                                       InputLabelProps={{ style:{color:'white'} }}
                             />
-                        
+                            <TextField variant="outlined" 
+                                      label="DIR. LLEGADA"
+                                      fullWidth
+                                      //size="small"
+                                      sx={{display:'block',
+                                            margin:'.5rem 0'}}
+                                      //sx={{mt:-3}}
+                                      name="ref_direccion"
+                                      value={ventaDet.ref_direccion}
+                                      onChange={handleChange}
+                                      inputProps={{ style:{color:'white',textAlign: 'left'} }}
+                                      InputLabelProps={{ style:{color:'white'}
+                                    }}
+                            />
+
                             <Box sx={{ minWidth: 120 }}
                                  // sx={{mt:-3}}
                             >
@@ -258,8 +335,9 @@ export default function VentaFormDet() {
                                         id={ventaDet.id_zona_entrega}
                                         value={ventaDet.id_zona_entrega}
                                         name="id_zona_entrega"
+                                        size="small"
                                         sx={{display:'block',
-                                        margin:'.5rem 0'}}
+                                        margin:'.5rem 0' , color:"white"}}
                                         label="Zona Entrega"
                                         onChange={handleChange}
                                         inputProps={{ style:{color:'white'} }}
@@ -286,11 +364,12 @@ export default function VentaFormDet() {
                                       >Producto/Lote</InputLabel>
                                       <Select
                                         labelId="producto"
-                                        id={ventaDet.id_lote}
-                                        value={ventaDet.id_lote}
-                                        name="id_lote"
+                                        id={ventaDet.id_producto}
+                                        value={ventaDet.id_producto}
+                                        name="id_producto"
+                                        size="small"
                                         sx={{display:'block',
-                                        margin:'.5rem 0'}}
+                                        margin:'.5rem 0' , color:"white"}}
                                         label="Producto Lote"
                                         onChange={handleChange}
                                         inputProps={{ style:{color:'white'} }}
@@ -298,8 +377,9 @@ export default function VentaFormDet() {
                                       >
                                         {   
                                             producto_select.map(elemento => (
-                                            <MenuItem   key={elemento.id_lote} 
-                                                        value={elemento.id_lote}>
+                                            <MenuItem   key={elemento.id_producto} 
+                                                        value={elemento.id_producto}
+                                            >
                                               {elemento.nombre}
                                             </MenuItem>)) 
                                         }
@@ -307,64 +387,217 @@ export default function VentaFormDet() {
                                     </FormControl>
                             </Box>
 
-                            <TextField variant="filled" 
-                                      label="P.UNIT $"
-                                      sx={{display:'block',
-                                            margin:'.5rem 0'}}
-                                      //sx={{mt:-3}}
-                                      name="precio_unitario"
-                                      value={ventaDet.precio_unitario}
-                                      onChange={handleChange}
-                                      inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                      InputLabelProps={{ style:{color:'white'}
-                                    }}
-                            />
+                            <Grid container spacing={0.5}
+                            >
+                                <Grid item xs={10}>
+                                    <TextField variant="filled" 
+                                          label="P.UNIT $"
+                                          size="small"
+                                          fullWidth
+                                          sx={{display:'block',
+                                                margin:'.5rem 0'}}
+                                          //sx={{mt:-3}}
+                                          name="precio_unitario"
+                                          value={ventaDet.precio_unitario}
+                                          onChange={handleChange}
+                                          inputProps={{ style:{color:'white',textAlign: 'center', fontSize: "1.5rem"} }}
+                                          InputLabelProps={{ style:{color:'white'}
+                                        }}
+                                    />
+                                </Grid>
 
-                            <TextField variant="filled" 
-                                      label="% IGV"
-                                      sx={{display:'block',
-                                            margin:'.5rem 0'}}
-                                      //sx={{mt:-3}}
-                                      name="porc_igv"
-                                      value={ventaDet.porc_igv}
-                                      onChange={handleChange}
-                                      inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                      InputLabelProps={{ style:{color:'white'} }}
-                            />
+                                <Grid item xs={2}>
+                                    <TextField variant="filled" 
+                                          label="% IGV"
+                                          size="normal"
+                                          sx={{display:'block',margin:'.75rem 0'}}
+                                          //sx={{mt:-3}}
+                                          name="porc_igv"
+                                          value={ventaDet.porc_igv}
+                                          onChange={handleChange}
+                                          inputProps={{ style:{color:'white',textAlign: 'center'} }}
+                                          InputLabelProps={{ style:{color:'white'} }}
+                                    />
+                                </Grid>
 
-                            <TextField variant="filled" 
-                                      label="TN."
-                                      sx={{display:'block',
-                                            margin:'.5rem 0'}}
-                                      //sx={{mt:-3}}
-                                      name="cantidad"
-                                      value={ventaDet.cantidad}
-                                      onChange={handleChange}
-                                      inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                      InputLabelProps={{ style:{color:'white'} }}
-                            />
+
+                            </Grid>
+
+
+
+                            <Grid container spacing={0.5}>
+
+                                  <Grid item xs={10}>
+                                    <TextField variant="filled" 
+                                                  label="CANT."
+                                                  size="small"
+                                                  fullWidth
+                                                  sx={{display:'block',
+                                                        margin:'.5rem 0'}}
+                                                  //sx={{mt:-3}}
+                                                  name="cantidad"
+                                                  value={ventaDet.cantidad}
+                                                  onChange={handleChange}
+                                                  inputProps={{ style:{color:'white',textAlign: 'center', fontSize: "1.5rem"} }}
+                                                  InputLabelProps={{ style:{color:'white'} }}
+                                    />
+                                </Grid>
+                                
+                                <Grid item xs={2}>
+                                        <Box sx={{mt:0}}>
+                                                <FormControl fullWidth>
+                                                  <InputLabel id="demo-simple-select-label" 
+                                                                    inputProps={{ style:{color:'white'} }}
+                                                                    InputLabelProps={{ style:{color:'white'} }}
+                                                  >UND.</InputLabel>
+                                                  <Select
+                                                          labelId="unidad_select"
+                                                          id={ventaDet.unidad_medida}
+                                                          value={ventaDet.unidad_medida}
+                                                          name="unidad_medida"
+                                                          size="normal"
+                                                          sx={{display:'block',
+                                                          margin:'.75rem', color:"white"}}
+                                                          label="Unidad"
+                                                          onChange={handleChange}
+                                                        >
+                                                          {   
+                                                              unidad_select.map(elemento => (
+                                                              <MenuItem key={elemento.unidad_medida} value={elemento.unidad_medida}>
+                                                                {elemento.unidad_medida}
+                                                              </MenuItem>)) 
+                                                          }
+                                                  </Select>
+                                                </FormControl>
+                                        </Box>
+                                </Grid>
+
+                            </Grid>
+
+                            <Box sx={{ minWidth: 120 }}
+                                   //sx={{mt:-3}}
+                            >
+                                    <FormControl fullWidth>
+                                      <InputLabel id="demo-simple-select-label" 
+                                                  inputProps={{ style:{color:'white'} }}
+                                                  InputLabelProps={{ style:{color:'white'} }}
+                                      >Condicion Pago</InputLabel>
+                                      <Select
+                                        labelId="producto"
+                                        id={ventaDet.id_formapago}
+                                        value={ventaDet.id_formapago}
+                                        name="id_formapago"
+                                        size="small"
+                                        sx={{display:'block',
+                                        margin:'.5rem 0', color:"white"}}
+                                        label="Forma Pago"
+                                        onChange={handleChange}
+                                        inputProps={{ style:{color:'white'} }}
+                                        InputLabelProps={{ style:{color:'white'} }}
+                                      >
+                                        {   
+                                            formapago_select.map(elemento => (
+                                            <MenuItem   key={elemento.id_formapago} 
+                                                        value={elemento.id_formapago}>
+                                              {elemento.nombre}
+                                            </MenuItem>)) 
+                                        }
+                                      </Select>
+                                    </FormControl>
+                            </Box>
+
+                            <Box sx={{mt:1}}>
+                                    <FormControl fullWidth>
+                                      <InputLabel id="demo-simple-select-label" 
+                                                        inputProps={{ style:{color:'white'} }}
+                                                        InputLabelProps={{ style:{color:'white'} }}
+                                      >Condicion Venta</InputLabel>
+                                      <Select
+                                              labelId="cond_venta_select"
+                                              id={ventaDet.cond_venta}
+                                              value={ventaDet.cond_venta}
+                                              name="cond_venta"
+                                              size="small"
+                                              sx={{display:'block',
+                                              margin:'.1rem', color:"white"}}
+                                              label="Condicion Venta"
+                                              onChange={handleChange}
+                                            >
+                                              {   
+                                                  cond_venta_select.map(elemento => (
+                                                  <MenuItem key={elemento.cond_venta} value={elemento.cond_venta}>
+                                                    {elemento.cond_venta}
+                                                  </MenuItem>)) 
+                                              }
+                                      </Select>
+                                    </FormControl>
+                            </Box>
+
+                            <Box sx={{mt:1}}>
+                                    <FormControl fullWidth>
+                                      <InputLabel id="demo-simple-select-label" 
+                                                        inputProps={{ style:{color:'white'} }}
+                                                        InputLabelProps={{ style:{color:'white'} }}
+                                      >Condicion Entrega</InputLabel>
+                                      <Select
+                                              labelId="cond_entrega_select"
+                                              id={ventaDet.cond_entrega}
+                                              value={ventaDet.cond_entrega}
+                                              name="cond_entrega"
+                                              size="small"
+                                              sx={{display:'block',
+                                              margin:'.1rem', color:"white"}}
+                                              label="Condicion Entrega"
+                                              onChange={handleChange}
+                                            >
+                                              {   
+                                                  cond_entrega_select.map(elemento => (
+                                                  <MenuItem key={elemento.cond_entrega} value={elemento.cond_entrega}>
+                                                    {elemento.cond_entrega}
+                                                  </MenuItem>)) 
+                                              }
+                                      </Select>
+                                    </FormControl>
+                            </Box>
+
                             <TextField variant="filled" 
                                       label="Observaciones"
+                                      fullWidth
+                                      size="small"
                                       sx={{display:'block',
                                             margin:'.5rem 0'}}
                                       //sx={{mt:-3}}
                                       name="ref_observacion"
                                       value={ventaDet.ref_observacion}
                                       onChange={handleChange}
-                                      inputProps={{ style:{color:'white',textAlign: 'center'} }}
+                                      inputProps={{ style:{color:'white',textAlign: 'left'} }}
                                       InputLabelProps={{ style:{color:'white'} }}
+                            />
+
+                            <TextField variant="outlined" 
+                                        label="Fecha Entrega"
+                                        fullWidth
+                                        sx={{mt:0,margin:'.5rem 0'}}
+                                        name="fecha_entrega2"
+                                        type="date"
+                                        //format="yyyy/MM/dd"
+                                        value={ventaDet.fecha_entrega2}
+                                        onChange={handleChange}
+                                        inputProps={{ style:{color:'white',textAlign: 'center'} }}
+                                        InputLabelProps={{ style:{color:'white'} }}
                             />
 
                             <Button variant='contained' 
                                     color='primary' 
-                                    sx={{mt:0}}
+                                    sx={{mt:1}}
                                     type='submit'
                                     disabled={!ventaDet.cantidad || 
                                               !ventaDet.porc_igv ||
                                               !ventaDet.precio_unitario ||
                                               !ventaDet.ref_documento_id ||
                                               !ventaDet.ref_razon_social ||
-                                              !ventaDet.id_lote 
+                                              !ventaDet.ref_direccion ||
+                                              !ventaDet.id_producto 
                                               }
                                     >
                                     { cargando ? (

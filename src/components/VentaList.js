@@ -5,7 +5,6 @@ import { useNavigate,useParams } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import FindIcon from '@mui/icons-material/FindInPage';
 import UpdateIcon from '@mui/icons-material/UpdateSharp';
-import SendIcon from '@mui/icons-material/Send';
 import Add from '@mui/icons-material/Add';
 
 import IconButton from '@mui/material/IconButton';
@@ -18,6 +17,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import '../App.css';
 import 'styled-components';
+import { sizeWidth } from '@mui/system';
 
 export default function VentaList() {
   createTheme('solarized', {
@@ -88,8 +88,10 @@ export default function VentaList() {
       <>
 			<Button key="delete" onClick={handleDelete} >
         ELIMINAR
+        <DeleteIcon></DeleteIcon>
 			</Button>
 			<Button key="modificar" onClick={handleUpdate} >
+        MODIFICAR
       <UpdateIcon/>
 			</Button>
 
@@ -109,38 +111,59 @@ export default function VentaList() {
   );
 
   const cargaRegistro = async () => {
-    const response = await fetch(`http://localhost:4000/venta`);
+    let strFecha="";
+    //La data, corresponde al mes de login
+    //le cargaremos fecha actual si parametro no existe
+    strFecha=params.fecha_proceso;
+    //console.log(strFecha);
+    if (params.fecha_proceso===null){
+      let nPos=0;
+      const fecha = new Date(); //ok fecha y hora actual
+      strFecha = fecha.toISOString(); //formato texto
+      nPos = strFecha.indexOf('T');
+      strFecha = strFecha.substr(0,nPos);
+    }
+    
+    const response = await fetch(`http://localhost:4000/ventaplan/${strFecha}`);
+    //const response = await fetch(`http://localhost:4000/ventaplan`);
     const data = await response.json();
     setRegistrosdet(data);
   }
   //////////////////////////////////////
   const columnas = [
-    { name:'OPERACION', 
+    { name:'FECHA', 
+      selector:row => row.comprobante_original_fecemi,
+      sortable: true
+    },
+    { name:'PEDIDO', 
+      selector:row => row.pedido,
+      sortable: true
+    },
+    { name:'VENDEDOR', 
       selector:row => row.tipo_op,
       sortable: true,
       key:true
     },
-    { name:'Zona Venta', 
+    { name:'CLIENTE', 
+      selector:row => row.ref_razon_social,
+      sortable: true
+    },
+    { name:'PRODUCTO', 
+      selector:row => row.descripcion,
+      sortable: true
+    },
+    { name:'FECHA PROY.CARGA', 
+      selector:row => row.fecha_entrega,
+      sortable: true
+    },
+    { name:'ZONA VENTA', 
       selector:row => row.zona_venta,
       sortable: true
     },
-    { name:'Fecha', 
-      selector:row => row.comprobante_original_fecemi,
-      sortable: true
-    },
-    { name:'Pedido', 
-      selector:row => row.pedido,
-      sortable: true
-    },
-    { name:'Vendedor', 
-      selector:row => row.vendedor,
-      sortable: true
-    },
-    { name:'Cliente', 
-      selector:row => row.razon_social,
+    { name:'ESTADO', 
+      selector:row => row.estado,
       sortable: true
     }
-
   ];
   
   const confirmaEliminacion = (cod,serie,num,elem)=>{
@@ -208,7 +231,7 @@ export default function VentaList() {
     </div>
 
     <Datatable
-      title="Gestion de Ventas"
+      title="Registro de Ventas/Pedidos"
       theme="solarized"
       columns={columnas}
       data={registrosdet}
@@ -217,7 +240,7 @@ export default function VentaList() {
       actions={actions}
 			onSelectedRowsChange={handleRowSelected}
 			clearSelectedRows={toggleCleared}
-      pagination
+      //pagination
 
       selectableRowsComponent={Checkbox} // Pass the function only
       sortIcon={<ArrowDownward />}  

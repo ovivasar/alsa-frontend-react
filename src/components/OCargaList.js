@@ -7,6 +7,7 @@ import FindIcon from '@mui/icons-material/FindInPage';
 import UpdateIcon from '@mui/icons-material/UpdateSharp';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Add from '@mui/icons-material/Add';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import IconButton from '@mui/material/IconButton';
 import swal from 'sweetalert';
@@ -96,6 +97,22 @@ export default function OCargaList() {
       navigate(`/ocargadet/${params.fecha_proceso}/${strAno}/${strNumero}/${nItem}/${sModo}/edit`);      
 		};
 
+    const handleUpdateGrupo = () => {
+			var strFecha;
+      var strAno;
+      var strNumero;
+      var nItem;
+      var sModo;
+      strFecha = selectedRows.map(r => r.fecha);
+      strNumero = selectedRows.map(r => r.numero);
+      nItem = selectedRows.map(r => r.item);
+      const fechaArmada = new Date(strFecha); //ok con hora 00:00:00
+      strAno = (fechaArmada.getFullYear()).toString(); 
+      
+      sModo = "editar";
+      navigate(`/ocarga/${strAno}/${strNumero}/edit`);
+		};
+
     const handleClonar = () => {
 			var strFecha;
       var strAno;
@@ -122,8 +139,12 @@ export default function OCargaList() {
        MODIFICAR<EditRoundedIcon/>
 			</Button>
 
+      <Button key="modificar_grupo" onClick={handleUpdateGrupo} >
+       MOD. GRUPO<EditRoundedIcon/>
+			</Button>
+
 			<Button key="clonar" onClick={handleClonar} >
-       CLONAR<UpdateIcon/>
+       CLONAR<ContentCopyIcon/>
 			</Button>
       </>
 		);
@@ -132,7 +153,8 @@ export default function OCargaList() {
   const actions = (
     	<IconButton color="primary" 
         onClick = {()=> {
-                    navigate(`/ocargadet/${params.fecha_proceso}/new`);
+                    //navigate(`/ocargadet/${params.fecha_proceso}/new`);
+                    navigate(`/ocargadet01/${params.fecha_proceso}/new`)
                   }
                 }
       >
@@ -199,7 +221,7 @@ export default function OCargaList() {
       sortable: true
     },
     { name:'RAZON SOCIAL', 
-      selector:row => row.razon_social,
+      selector:row => row.ref_razon_social,
       sortable: true
     },
     { name:'DESAG. SACOS', 
@@ -323,7 +345,7 @@ export default function OCargaList() {
   const filtrar=(strBusca)=>{
       var resultadosBusqueda = [];
       resultadosBusqueda = tabladet.filter((elemento) => {
-        if (elemento.razon_social.toString().toLowerCase().includes(strBusca.toLowerCase())
+        if (elemento.ref_razon_social.toString().toLowerCase().includes(strBusca.toLowerCase())
          || elemento.e_estibadores.toString().toLowerCase().includes(strBusca.toLowerCase())
          || elemento.descripcion.toString().toLowerCase().includes(strBusca.toLowerCase())
           ){

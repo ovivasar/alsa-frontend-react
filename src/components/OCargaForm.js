@@ -10,6 +10,14 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import UpdateIcon from '@mui/icons-material/UpdateSharp';
 import IconButton from '@mui/material/IconButton';
 
+import Tooltip from '@mui/material/Tooltip';
+import DnsTwoToneIcon from '@mui/icons-material/DnsTwoTone';
+import BeenhereIcon from '@mui/icons-material/Beenhere';
+import HomeWorkIcon from '@mui/icons-material/HomeWork';
+import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import SummarizeIcon from '@mui/icons-material/Summarize';
+
 import DateFnsUtils from '@date-io/date-fns';
 import swal from 'sweetalert';
 
@@ -17,15 +25,6 @@ export default function OCargaForm() {
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
-
-  //Select(Combos) para llenar, desde tabla
-  const [operacion_select] = useState([
-    {tipo_op:'VENTA'},
-    {tipo_op:'TRANSBORDO'}
-  ]);
-
-  const [zona_select,setZonaSelect] = useState([]);
-  const [cliente_select,setClienteSelect] = useState([]);
 
   const [registrosdet,setRegistrosdet] = useState([]);
   //const fecha_actual = new Date();
@@ -76,54 +75,15 @@ export default function OCargaForm() {
   //Aqui se leen parametros en caso lleguen
   useEffect( ()=> {
     if (params.numero){
-      mostrarOCarga(params.ano,params.numero);
       mostrarOCargaDetalle(params.ano,params.numero);
+      mostrarOCarga(params.ano,params.numero);
     }
-    cargaZonaCombo();
-    cargaClienteCombo();
     
   },[params.numero]);
 
-  const cargaZonaCombo = () =>{
-    axios
-    .get('http://localhost:4000/zona')
-    .then((response) => {
-        setZonaSelect(response.data);
-    })
-    .catch((error) => {
-        console.log(error);
-    });
-  }
-  const cargaClienteCombo = () =>{
-    axios
-    .get('http://localhost:4000/correntista')
-    .then((response) => {
-        setClienteSelect(response.data);
-    })
-    .catch((error) => {
-        console.log(error);
-    });
-  }
 
   //Rico evento change
   const handleChange = e => {
-    var index;
-    var sTexto;
-    if (e.target.name === "id_zona_venta") {
-      const arrayCopia = zona_select.slice();
-      index = arrayCopia.map(elemento => elemento.id_zona).indexOf(e.target.value);
-      sTexto = arrayCopia[index].nombre;
-      setOCarga({...ocarga, [e.target.name]: e.target.value, zona_venta:sTexto});
-      return;
-    }
-    if (e.target.name === "documento_id") {
-      const arrayCopia = cliente_select.slice();
-      index = arrayCopia.map(elemento => elemento.documento_id).indexOf(e.target.value);
-      sTexto = arrayCopia[index].razon_social;
-      setOCarga({...ocarga, [e.target.name]: e.target.value, razon_social:sTexto});
-      return;
-    }
-
     setOCarga({...ocarga, [e.target.name]: e.target.value});
   }
 
@@ -131,50 +91,46 @@ export default function OCargaForm() {
   const mostrarOCarga = async (ano,numero) => {
     const res = await fetch(`http://localhost:4000/ocarga/${ano}/${numero}`);
     const data = await res.json();
-    //Actualiza datos para enlace con controles, al momento de modo editar
     setOCarga({  
                 fecha:data.fecha,
-                numero:data.numero,
-                registrado:data.registrado
+                numero:data.numero
               });
-    //console.log(data);
     setEditando(true);
+
   };
   
   const mostrarOCargaDetalle = async (ano,numero) => {
     const res = await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}`);
     const dataDet = await res.json();
     setRegistrosdet(dataDet);
-    console.log(registrosdet.length);
+    //console.log(registrosdet.length);
     setEditando(true);
   };
 
-  const eliminarVentaDetalleItem = async (cod,serie,num,elem,item) => {
-    await fetch(`http://localhost:4000/ventadet/${cod}/${serie}/${num}/${elem}/${item}`, {
+  const eliminarVentaDetalleItem = async (ano,numero,item) => {
+    await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}/${item}`, {
       method:"DELETE"
     });
     
-    setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.comprobante_original_codigo !== cod ||
-                                                        registrosdet.comprobante_original_serie !== serie ||
-                                                        registrosdet.comprobante_original_numero !== num ||
-                                                        registrosdet.elemento !== elem ||
+    setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.ano !== ano ||
+                                                        registrosdet.numero !== numero ||
                                                         registrosdet.item !== item                                                        
     ));
     //console.log(data);
   }
 
-  const confirmaEliminacionDet = (cod,serie,num,elem,item)=>{
+  const confirmaEliminacionDet = (ano,numero,item)=>{
     swal({
-      title:"Eliminar Detalle de Venta",
+      title:"Eliminar Orden de Carga",
       text:"Seguro ?",
       icon:"warning",
       timer:"3000",
       buttons:["No","Si"]
     }).then(respuesta=>{
         if (respuesta){
-          eliminarVentaDetalleItem(cod,serie,num,elem,item);
+          eliminarVentaDetalleItem(ano,numero,item);
             swal({
-            text:"Detalle de venta eliminado con exito",
+            text:"Detalle de Carga eliminado con exito",
             icon:"success",
             timer:"2000"
           });
@@ -208,10 +164,10 @@ export default function OCargaForm() {
                                     //label="fecha"
                                     sx={{display:'block',
                                           margin:'.5rem 0'}}
-                                    name="comprobante_original_fecemi"
+                                    name="fecha"
                                     type="date"
                                     //format="yyyy/MM/dd"
-                                    value={ocarga.comprobante_original_fecemi}
+                                    value={ocarga.fecha}
                                     onChange={handleChange}
                                     inputProps={{ style:{color:'white'} }}
                                     InputLabelProps={{ style:{color:'white'} }}
@@ -220,39 +176,18 @@ export default function OCargaForm() {
                           
                           <Grid item xs={1.5}>
                             <TextField variant="outlined" 
-                                        label="ORDEN"
+                                        label="ORDEN CARGA"
                                         sx={{display:'block',
                                                 margin:'.5rem 0'}}
                                         //sx={{mt:-3}}
-                                        name="cantidad"
-                                        value={ocarga.cantidad}
+                                        name="numero"
+                                        value={ocarga.numero}
                                         onChange={handleChange}
                                         inputProps={{ style:{color:'white',textAlign: 'center'} }}
                                         InputLabelProps={{ style:{color:'white'} }}
                                 />
                           </Grid>
-
-                          
-                          <Grid item xs={0.8}>
-                              <Button variant='contained' 
-                                      color='primary' 
-                                      type='submit'
-                                      sx={{display:'block',
-                                      margin:'.5rem 0'}}
-                                      disabled={
-                                                !ocarga.id_zona_venta || 
-                                                !ocarga.comprobante_original_fecemi || 
-                                                !ocarga.documento_id
-                                                }
-                                      >
-                                      { cargando ? (
-                                      <CircularProgress color="inherit" size={24} />
-                                      ) : (
-                                        editando ?
-                                      'Modificar' : 'Grabar')
-                                      }
-                              </Button>
-                          </Grid>
+                         
                       </Grid>
                     </form>
 
@@ -279,8 +214,10 @@ export default function OCargaForm() {
                   <Grid item xs={0.5}>
                     <IconButton color="primary" aria-label="upload picture" component="label" size="small"
                                 onClick = {()=> {
-                                  navigate(`/ventadet/${ocarga.comprobante_original_codigo}/${ocarga.comprobante_original_serie}/${ocarga.comprobante_original_numero}/${ocarga.elemento}/${ocarga.comprobante_original_fecemi}/new`);
-                                                }
+                                  let agrega;
+                                  agrega = "nuevo"
+                                  navigate(`/ocargadet01/${ocarga.fecha}/${params.ano}/${params.numero}/${agrega}/new`);
+                                  }
                                 }
                     >
                       <AddBoxRoundedIcon />
@@ -289,39 +226,39 @@ export default function OCargaForm() {
                   </Grid>
                   
                   <Grid item xs={0.5}>
-                    -
+                    
                   </Grid>
 
-                  <Grid item xs={1}>
-                    PEDIDO
+                  <Grid item xs={0.5}>
+                    
                   </Grid>
 
-                  <Grid item xs={1}>
-                    ZONA
+                  <Grid item xs={0.5}>
+                    
                   </Grid>
 
-                  <Grid item xs={1}>
-                    GUIA
+                  <Grid item xs={1.5}>
+                    IDENTIDAD
                   </Grid>
 
-                  <Grid item xs={1}>
-                    OPERACION
+                  <Grid item xs={2}>
+                    CLIENTE
                   </Grid>
 
-                  <Grid item xs={1}>
-                    TICKET
-                  </Grid>
-                  
                   <Grid item xs={1}>
                     PRODUCTO
                   </Grid>
 
                   <Grid item xs={1}>
-                    CLIENTE
+                    ZONA
+                  </Grid>
+                  
+                  <Grid item xs={1}>
+                    CANTIDAD
                   </Grid>
 
                   <Grid item xs={1}>
-                    SACOS
+                    
                   </Grid>
 
               </Grid>
@@ -349,31 +286,46 @@ export default function OCargaForm() {
               <Grid container spacing={0.5}>
 
                   <Grid item xs={0.5}>
-                    <IconButton color="primary" aria-label="upload picture" component="label" size="small"
-                                onClick = {()=> navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)}
-                    >
-                      <BorderColorIcon />
-                    </IconButton>
+                    <Tooltip title="DATOS Carga/Descarga">
+                      <IconButton color="secondary" aria-label="upload picture" component="label" size="small"
+                                  sx={{ color: '#0277BD' }}
+                                  onClick = {()=> navigate(`/ocargadet01/${ocarga.fecha}/${params.ano}/${indice.numero}/${indice.item}/editar/edit`)}
+                      >
+                        <DnsTwoToneIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Grid>
                   
                   <Grid item xs={0.5}>
+                    <Tooltip title="DATOS Almacen">
+                      <IconButton color="primary" aria-label="upload picture" component="label" size="small"
+                                  sx={{ color: '#1565C0' }}
+                                  onClick = {()=> navigate(`/ocargadet02/${ocarga.fecha}/${params.ano}/${indice.numero}/${indice.item}/editar/edit`)}
+                      >
+                        <HolidayVillageIcon />
+                      </IconButton>
+                    </Tooltip>  
+                  </Grid>
+                  
+                  <Grid item xs={0.5}>
+                    <Tooltip title="DATOS Peso/Estibaje">
+                      <IconButton color="success" aria-label="upload picture" component="label" size="small"
+                                  sx={{ color: '#283593' }}
+                                  onClick = {()=> navigate(`/ocargadet03/${ocarga.fecha}/${params.ano}/${ocarga.numero}/${indice.item}/editar/edit`)}
+                      >
+                        <SummarizeIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+
+                  <Grid item xs={0.5}>
                     <IconButton color="warning" aria-label="upload picture" component="label" size="small"
-                                onClick = { () => confirmaEliminacionDet(indice.comprobante_original_codigo
-                                                                          ,indice.comprobante_original_serie
-                                                                          ,indice.comprobante_original_numero
-                                                                          ,indice.elemento
+                                onClick = { () => confirmaEliminacionDet(params.ano
+                                                                          ,params.numero
                                                                           ,indice.item)
                                           }
                     >
                       <DeleteIcon />
-                    </IconButton>
-                  </Grid>
-
-                  <Grid item xs={0.5}>
-                    <IconButton color="primary" aria-label="upload picture" component="label" size="small"
-                                onClick = {()=> navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)}
-                    >
-                      <GroupsIcon />
                     </IconButton>
                   </Grid>
 
@@ -391,25 +343,13 @@ export default function OCargaForm() {
 
                   <Grid item xs={1}>
                       <Typography fontSize={15} marginTop="0" >
-                        {indice.zona_entrega}
-                      </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={1}>
-                      <Typography fontSize={15} marginTop="0" >
                         {indice.descripcion}
                       </Typography>
                   </Grid>
 
                   <Grid item xs={1}>
                       <Typography fontSize={15} marginTop="0" >
-                        {indice.precio_unitario}
-                      </Typography>
-                  </Grid>
-
-                  <Grid item xs={1}>
-                      <Typography fontSize={15} marginTop="0" >
-                        {indice.porc_igv}
+                        {indice.zona_entrega}
                       </Typography>
                   </Grid>
 
