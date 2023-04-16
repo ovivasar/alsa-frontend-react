@@ -12,6 +12,8 @@ import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { orange } from '@mui/material/colors';
 
 export default function OCargaFormDet() {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Seccion Modal
@@ -201,7 +203,7 @@ export default function OCargaFormDet() {
       strFecha = strFecha.substr(0,nPos);
     }
     
-    const response = await fetch(`http://localhost:4000/ventadetpendientes/${strFecha}`);
+    const response = await fetch(`${back_host}/ventadetpendientes/${strFecha}`);
     const data = await response.json();
     setRegistrosdet(data);
     setTabladet(data); //Copia para tratamiento de filtrado
@@ -308,7 +310,7 @@ export default function OCargaFormDet() {
       if (params.modo === "clonar") {
         console.log("insertando nueva ORDEN CARGA, opcion clonar");
         console.log(ocargaDet);
-        await fetch("http://localhost:4000/ocargadetadd", {
+        await fetch(`${back_host}/ocargadetadd`, {
           method: "POST",
           body: JSON.stringify(ocargaDet),
           headers: {"Content-Type":"application/json"}
@@ -316,7 +318,7 @@ export default function OCargaFormDet() {
       }
       else{
         console.log("actualizando");
-        await fetch(`http://localhost:4000/ocargadet/${params.ano}/${params.numero}/${params.item}`, {
+        await fetch(`${back_host}/ocargadet/${params.ano}/${params.numero}/${params.item}`, {
           method: "PUT",
           body: JSON.stringify(ocargaDet),
           headers: {"Content-Type":"application/json"}
@@ -327,7 +329,8 @@ export default function OCargaFormDet() {
       //Insertar new orden detalle
       if (ocargaDet.numero==="") {
           console.log("insertando nueva ORDEN CARGA");
-          await fetch("http://localhost:4000/ocargadet", {
+          console.log(ocargaDet);
+          await fetch(`${back_host}/ocargadet`, {
             method: "POST",
             body: JSON.stringify(ocargaDet),
             headers: {"Content-Type":"application/json"}
@@ -335,7 +338,8 @@ export default function OCargaFormDet() {
       }else {
           //Agregar orden detalle (con referencia de numero carga)
           console.log("agregando o clonado adicional");
-          await fetch("http://localhost:4000/ocargadetadd", {
+          console.log(ocargaDet);
+          await fetch(`${back_host}/ocargadetadd`, {
             method: "POST",
             body: JSON.stringify(ocargaDet),
             headers: {"Content-Type":"application/json"}
@@ -366,7 +370,7 @@ export default function OCargaFormDet() {
 
   const cargaZonaEntregaCombo = () =>{
     axios
-    .get('http://localhost:4000/zonadet')
+    .get(`${back_host}/zonadet`)
     .then((response) => {
         setZonaEntregaSelect(response.data);
     })
@@ -376,7 +380,7 @@ export default function OCargaFormDet() {
   }
   const cargaProductoCombo = () =>{
     axios
-    .get('http://localhost:4000/producto')
+    .get(`${back_host}/producto`)
     .then((response) => {
         setProductoSelect(response.data);
     })
@@ -386,7 +390,7 @@ export default function OCargaFormDet() {
   }
   const cargaClienteCombo = () =>{
     axios
-    .get('http://localhost:4000/correntista')
+    .get(`${back_host}/correntista`)
     .then((response) => {
         setClienteSelect(response.data);
     })
@@ -428,7 +432,7 @@ export default function OCargaFormDet() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarOCarga = async (ano,numero,item) => {
-    const res = await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}/${item}`);
+    const res = await fetch(`${back_host}/ocargadet/${ano}/${numero}/${item}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
     setocargaDet({  

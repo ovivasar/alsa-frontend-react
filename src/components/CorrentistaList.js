@@ -20,6 +20,8 @@ import '../App.css';
 import 'styled-components';
 
 export default function CorrentistaList() {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   createTheme('solarized', {
     text: {
       //primary: '#268bd2',
@@ -31,8 +33,8 @@ export default function CorrentistaList() {
       default: '#1e272e'
     },
     context: {
-      background: '#cb4b16',
-      //background: '#1e272e',
+      //background: '#cb4b16',
+      background: '#1e272e',
       text: '#FFFFFF',
     },
     divider: {
@@ -52,6 +54,7 @@ export default function CorrentistaList() {
   const [toggleCleared, setToggleCleared] = useState(false);
 	//const [data, setData] = useState(tableDataItems);
   const [registrosdet,setRegistrosdet] = useState([]);
+  const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado
 
   const handleRowSelected = useCallback(state => {
 		setSelectedRows(state.selectedRows);
@@ -75,8 +78,10 @@ export default function CorrentistaList() {
       <>
 			<Button key="delete" onClick={handleDelete} >
         ELIMINAR
+        <DeleteIcon></DeleteIcon>
 			</Button>
 			<Button key="modificar" onClick={handleUpdate} >
+        MODIFICAR
       <UpdateIcon/>
 			</Button>
 
@@ -99,23 +104,41 @@ export default function CorrentistaList() {
   //const [registrosdet,setRegistrosdet] = useState([]);
   //////////////////////////////////////////////////////////
   const cargaRegistro = async () => {
-    const response = await fetch(`http://localhost:4000/correntista`);
+    const response = await fetch(`${back_host}/correntista`);
     const data = await response.json();
     setRegistrosdet(data);
+    setTabladet(data); //Copia para tratamiento de filtrado
   }
   //////////////////////////////////////
   const columnas = [
-    { name:'RUC / DNI', 
+    { name:'RUC/DNI', 
       selector:row => row.documento_id,
       sortable: true,
-      key:true
+      width: '110px'
+      //key:true
     },
     { name:'Razon Social', 
       selector:row => row.razon_social,
+      //width: '350px',
+      sortable: true
+    },
+    { name:'Codigo Interno', 
+      selector:row => row.codigo,
+      width: '150px',
+      sortable: true
+    },
+    { name:'Email', 
+      selector:row => row.email,
       sortable: true
     },
     { name:'Telefono', 
       selector:row => row.telefono,
+      width: '100px',
+      sortable: true
+    },
+    { name:'Contacto', 
+      selector:row => row.contacto,
+      width: '100px',
       sortable: true
     }
   ];
@@ -147,12 +170,29 @@ export default function CorrentistaList() {
   const params = useParams();
 
   const eliminarRegistroDet = async (id_registro) => {
-    await fetch(`http://localhost:4000/correntista/${id_registro}`, {
+    await fetch(`${back_host}/correntista/${id_registro}`, {
       method:"DELETE"
     });
     //setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.documento_id !== id_registro));
     //console.log(data);
   }
+  const actualizaValorFiltro = e => {
+    //setValorBusqueda(e.target.value);
+    filtrar(e.target.value);
+  }
+  const filtrar=(strBusca)=>{
+    var resultadosBusqueda = [];
+    resultadosBusqueda = tabladet.filter((elemento) => {
+      if (elemento.razon_social.toString().toLowerCase().includes(strBusca.toLowerCase())
+       || elemento.documento_id.toString().toLowerCase().includes(strBusca.toLowerCase())
+       || elemento.codigo.toString().toLowerCase().includes(strBusca.toLowerCase())
+       || elemento.email.toString().toLowerCase().includes(strBusca.toLowerCase())
+        ){
+            return elemento;
+        }
+    });
+    setRegistrosdet(resultadosBusqueda);
+}
 
   //////////////////////////////////////////////////////////
   useEffect( ()=> {
@@ -163,11 +203,13 @@ export default function CorrentistaList() {
  return (
   <>
     <div> 
-      <TextField variant="filled" 
-                                   label="busqueda"
+      <TextField fullWidth variant="outlined" color="success" size="small"
+                                   label="FILTRAR"
                                    sx={{display:'block',
                                         margin:'.5rem 0'}}
                                    name="busqueda"
+                                   placeholder='Cliente   Dni   Ruc  Codigo  Email'
+                                   onChange={actualizaValorFiltro}
                                    inputProps={{ style:{color:'white'} }}
                                    InputProps={{
                                       startAdornment: (
@@ -190,11 +232,11 @@ export default function CorrentistaList() {
       actions={actions}
 			onSelectedRowsChange={handleRowSelected}
 			clearSelectedRows={toggleCleared}
-      pagination
+      //pagination
 
       selectableRowsComponent={Checkbox} // Pass the function only
       sortIcon={<ArrowDownward />}  
-
+      dense true
     >
     </Datatable>
 

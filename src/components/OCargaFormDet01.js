@@ -12,6 +12,8 @@ import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { orange } from '@mui/material/colors';
 
 export default function OCargaFormDet() {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Seccion Modal
@@ -100,32 +102,25 @@ export default function OCargaFormDet() {
       selector:row => row.pedido,
       sortable: true
     },
-    //{ name:'DOCUMENTO ID', 
-    //  selector:row => row.ref_documento_id,
-    //  sortable: true
-    //},
     { name:'RAZON_SOCIAL', 
       selector:row => row.ref_razon_social,
       sortable: true
     },
-    //{ name:'IDPRODUCTO', 
-    //  selector:row => row.id_producto,
-    //  sortable: true
-    //},
     { name:'PRODUCTO', 
       selector:row => row.nombre,
       sortable: true
     },
-    //{ name:'IDZONA', 
-    //  selector:row => row.id_zona_entrega,
-    //  sortable: true
-    //},
     { name:'ENTREGA', 
       selector:row => row.zona_entrega,
       sortable: true
     },
     { name:'FECHA', 
       selector:row => row.fecha,
+      sortable: true,
+      key:true
+    },
+    { name:'CARGA', 
+      selector:row => row.carga,
       sortable: true,
       key:true
     },
@@ -136,6 +131,11 @@ export default function OCargaFormDet() {
     },
     { name:'SALDO', 
       selector:row => row.saldo,
+      sortable: true,
+      key:true
+    },
+    { name:'UNIDAD', 
+      selector:row => row.unidad_medida,
       sortable: true,
       key:true
     }
@@ -157,6 +157,8 @@ export default function OCargaFormDet() {
       var strRazonSocial;
       var strCantidad;
       var strPlacaVacio;
+      var strUnidadMedida;
+      var strTrFechaCarga;
 
       strPedido = selectedRows.map(r => r.pedido);
       strIdProducto = selectedRows.map(r => r.id_producto);
@@ -167,6 +169,8 @@ export default function OCargaFormDet() {
       strRazonSocial = selectedRows.map(r => r.ref_razon_social);
       strCantidad = selectedRows.map(r => r.saldo);
       strPlacaVacio = selectedRows.map(r => r.tr_placa);
+      strUnidadMedida = selectedRows.map(r => r.unidad_medida); //new
+      strTrFechaCarga = selectedRows.map(r => r.carga); //new
 
       //console.log(strPedido[0]);
       //ojo: cuando llega la variable ,desde un filtro en automatico, llega como array unitario, pero array
@@ -178,9 +182,12 @@ export default function OCargaFormDet() {
       ocargaDet.zona_entrega = strZonaEntrega[0];
       ocargaDet.ref_documento_id = strDocumentoId[0];
       ocargaDet.ref_razon_social= strRazonSocial[0];
-      ocargaDet.saldo= strCantidad[0]; //referencial para avisar y no sobrepasar monto
-      ocargaDet.cantidad= strCantidad[0];
-      ocargaDet.tr_placa= strPlacaVacio[0];
+      ocargaDet.saldo = strCantidad[0]; //referencial para avisar y no sobrepasar monto
+      ocargaDet.cantidad = strCantidad[0];
+      ocargaDet.tr_placa = strPlacaVacio[0];
+
+      ocargaDet.unidad_medida = strUnidadMedida[0]; //new
+      ocargaDet.carga = strTrFechaCarga[0]; //new
 
       setToggleCleared(!toggleCleared);
       //Cerrar Modal
@@ -212,7 +219,7 @@ export default function OCargaFormDet() {
       strFecha = strFecha.substr(0,nPos);
     }
     
-    const response = await fetch(`http://localhost:4000/ventadetpendientes/${strFecha}`);
+    const response = await fetch(`${back_host}/ventadetpendientes/${strFecha}`);
     const data = await response.json();
     setRegistrosdet(data);
     setTabladet(data); //Copia para tratamiento de filtrado
@@ -282,11 +289,13 @@ export default function OCargaFormDet() {
       ref_razon_social:'',  //ventas
       id_producto:'',   //ventas
       descripcion:'',   //ventas
+      unidad_medida:'',   //ventas NEWWWWW
       saldo:'',      //solo referencial NEW
       cantidad:'',      //ventas
       operacion:'',     //ocarga-fase01
       tr_placa:'',      //ventas
       tr_placacargado:'', //ocarga-fase01
+      carga:'',      //tr_fecha_carga(proyectado) solo referencial NEW, para verificar mostrar alerta en caso > fecha_carga
 
       id_zona_entrega:'', //ventas referencial, no visible
       zona_entrega:'',    //ventas referencial, no visible
@@ -303,7 +312,7 @@ export default function OCargaFormDet() {
       if (params.modo === "clonar") {
         console.log("insertando nueva ORDEN CARGA, opcion clonar");
         console.log(ocargaDet);
-        await fetch("http://localhost:4000/ocargadetadd", {
+        await fetch(`${back_host}/ocargadetadd`, {
           method: "POST",
           body: JSON.stringify(ocargaDet),
           headers: {"Content-Type":"application/json"}
@@ -311,18 +320,19 @@ export default function OCargaFormDet() {
       }
       else{
         console.log("actualizando");
-        await fetch(`http://localhost:4000/ocargadet01/${params.ano}/${params.numero}/${params.item}`, {
+        await fetch(`${back_host}/ocargadet01/${params.ano}/${params.numero}/${params.item}`, {
           method: "PUT",
           body: JSON.stringify(ocargaDet),
           headers: {"Content-Type":"application/json"}
         });
       }
     }else{
+      
       console.log(ocargaDet);
       //Insertar new orden detalle
       if (ocargaDet.numero==="") {
-          console.log("insertando nueva ORDEN CARGA");
-          await fetch("http://localhost:4000/ocargadet", {
+          console.log("insertando nueva ORDEN CARGA", ocargaDet);
+          await fetch(`${back_host}/ocargadet`, {
             method: "POST",
             body: JSON.stringify(ocargaDet),
             headers: {"Content-Type":"application/json"}
@@ -330,12 +340,13 @@ export default function OCargaFormDet() {
       }else {
           //Agregar orden detalle (con referencia de numero carga)
           console.log("agregando o clonado adicional");
-          await fetch("http://localhost:4000/ocargadetadd", {
+          await fetch(`${back_host}/ocargadetadd`, {
             method: "POST",
             body: JSON.stringify(ocargaDet),
             headers: {"Content-Type":"application/json"}
           });
       }
+      
     }
 
     setCargando(false);
@@ -404,7 +415,7 @@ export default function OCargaFormDet() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarOCarga = async (ano,numero,item) => {
-    const res = await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}/${item}`);
+    const res = await fetch(`${back_host}/ocargadet/${ano}/${numero}/${item}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
     setocargaDet({  
@@ -424,10 +435,12 @@ export default function OCargaFormDet() {
                 ref_razon_social:data.ref_razon_social,
                 id_producto:data.id_producto,
                 descripcion:data.descripcion,
-                cantidad:data.cantidad, //new
+                cantidad:data.cantidad, 
+                unidad_medida:data.unidad_medida, //new
                 operacion:data.operacion,
-                tr_placa:data.tr_placa, ///new
-                tr_placacargado:data.tr_placacargado, ///new
+                tr_placa:data.tr_placa, 
+                tr_placacargado:data.tr_placacargado, 
+                carga:data.carga, //new solo MUestra tr_fecha_carga
                 id_zona_entrega:data.id_zona_entrega,
                 zona_entrega:data.zona_entrega,
 
@@ -445,6 +458,7 @@ export default function OCargaFormDet() {
 
     setEditando(true);
   };
+
   ///Body para Modal de Busqueda Incremental de Pedidos
   const body=(
     <div>
@@ -474,6 +488,9 @@ export default function OCargaFormDet() {
           theme="solarized"
           columns={columnas}
           data={registrosdet}
+          pagination={true}
+          paginationPerPage={8} // Número de filas por página
+
           selectableRows
           contextActions={contextActions}
           //actions={actions}
@@ -530,19 +547,18 @@ export default function OCargaFormDet() {
                   >
                 
                 <CardContent >
-                    <form onSubmit={handleSubmit} >
+                    <form onSubmit={handleSubmit} autoComplete="off">
 
                             <Grid container spacing={0.5}
                                       direction="column"
                                       //alignItems="center"
                                       justifyContent="center"
                             >
-                                    <Typography fontSize={15} marginTop="0.5rem" 
-                                    style={{color:'#F39C12'}}
-                                    >
-                                    DATOS DE ORDEN (CARGA/DESCARGA)
-                                    </Typography>
-
+                                <Typography fontSize={15} marginTop="0.5rem" 
+                                style={{color:'#F39C12'}}
+                                >
+                                DATOS DE ORDEN (CARGA/DESCARGA)
+                                </Typography>
 
                                 <Grid container spacing={0.5}>
                                     <Grid item xs={10}>
@@ -569,92 +585,102 @@ export default function OCargaFormDet() {
                                             }
                                           }
                                         >
-                                        <FindIcon />
-                                    </IconButton>
-                                </Grid>
-
+                                          <FindIcon />
+                                        </IconButton>
+                                    </Grid>
                                 </Grid>
                                     
-                                    <Typography marginTop="0.5rem" variant="subtitle2" 
-                                    style={{color:'#4F8FE1'}}
-                                    sx={{mt:0}}
-                                    >
-                                    CLIENTE : {ocargaDet.ref_razon_social}
-                                    </Typography>
+                                <Typography marginTop="0.5rem" variant="subtitle" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                CLIENTE : {ocargaDet.ref_razon_social}
+                                </Typography>
 
-                                    <Typography marginTop="0.5rem" variant="subtitle2" 
-                                    style={{color:'#4F8FE1'}}
-                                    sx={{mt:0}}
-                                    >
-                                    PRODUCTO : {ocargaDet.descripcion}
-                                    </Typography>
+                                <Typography marginTop="0.5rem" variant="subtitle" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                PRODUCTO : {ocargaDet.descripcion}
+                                </Typography>
 
-                                    <Typography marginTop="0.5rem" variant="subtitle2" 
-                                    style={{color:'#4F8FE1'}}
-                                    sx={{mt:0}}
-                                    >
-                                    SALDO : {ocargaDet.saldo}
-                                    </Typography>
-                                    
-                                    <Typography marginTop="0.5rem" variant="subtitle2" 
-                                    style={{color:'#4F8FE1'}}
-                                    sx={{mt:0}}
-                                    >
-                                    PLACA VACIO : {ocargaDet.tr_placa}
-                                    </Typography>
+                                <Typography marginTop="0.5rem" variant="subtitle" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                SALDO : {ocargaDet.saldo}
+                                </Typography>
 
-                                    <Typography marginTop="0.5rem" variant="subtitle2" 
-                                    style={{color:'#4F8FE1'}}
-                                    sx={{mt:0}}
-                                    >
-                                    ENTREGA : {ocargaDet.zona_entrega}
-                                    </Typography>
+                                <Typography marginTop="0.5rem" variant="subtitle" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                UNIDAD : {ocargaDet.unidad_medida}
+                                </Typography>
+
+                                <Typography marginTop="0.5rem" variant="subtitle" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                PLACA VACIO : {ocargaDet.tr_placa}
+                                </Typography>
+
+                                <Typography marginTop="0.5rem" variant="subtitle" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                F. PROYECTADA : {ocargaDet.carga}
+                                </Typography>
 
 
-                                    <TextField variant="outlined" 
-                                          label="CANTIDAD"
-                                          sx={{mt:2}}
-                                          fullWidth
-                                          name="cantidad"
-                                          value={ocargaDet.cantidad}
-                                          onChange={handleChange}
-                                          inputProps={{ style:{color:'white'} }}
-                                          InputLabelProps={{ style:{color:'white'} }}
-                                    />
+                                <TextField variant="outlined" 
+                                      label="CANTIDAD"
+                                      //sx={{mt:2}}
+                                      sx={{ mt:2,
+                                        typography: (theme) => ({
+                                          fontSize: 5,
+                                        }),
+                                      }}                                      
+                                      fullWidth
+                                      name="cantidad"
+                                      value={ocargaDet.cantidad}
+                                      onChange={handleChange}
+                                      inputProps={{ style:{color:'white'} }}
+                                      InputLabelProps={{ style:{color:'white'} }}
+                                />
 
-                                    <TextField variant="outlined" 
-                                        //label="fecha"
-                                        //size="small"
-                                        sx={{mt:1}}
-                                        fullWidth
-                                        name="fecha2"
-                                        type="date"
-                                        //format="yyyy/MM/dd"
-                                        value={ocargaDet.fecha2}
-                                        onChange={handleChange}
-                                        inputProps={{ style:{color:'white'} }}
-                                        InputLabelProps={{ style:{color:'white'} }}
-                                    />
+                                <TextField variant="outlined" 
+                                    //label="fecha"
+                                    //size="small"
+                                    sx={{mt:1}}
+                                    fullWidth
+                                    name="fecha2"
+                                    type="date"
+                                    //format="yyyy/MM/dd"
+                                    value={ocargaDet.fecha2}
+                                    onChange={handleChange}
+                                    inputProps={{ style:{color:'white'} }}
+                                    InputLabelProps={{ style:{color:'white'} }}
+                                />
 
-                                    <TextField variant="outlined" 
-                                          label="ORDEN"
-                                          sx={{mt:1}}
-                                          fullWidth
-                                          name="numero"
-                                          //value={ocargaDet.numero || numeroOrden}
-                                          value={ocargaDet.numero}
-                                          onChange={handleChange}
-                                          inputProps={{ style:{color:'white'} }}
-                                          InputLabelProps={{ style:{color:'white'} }}
-                                    />
-
+                                <TextField variant="outlined" 
+                                      label="ORDEN"
+                                      sx={{mt:1}}
+                                      fullWidth
+                                      name="numero"
+                                      //value={ocargaDet.numero || numeroOrden}
+                                      value={ocargaDet.numero}
+                                      onChange={handleChange}
+                                      inputProps={{ style:{color:'white'} }}
+                                      InputLabelProps={{ style:{color:'white'} }}
+                                />
 
                                 <FormControl fullWidth>
                                   <InputLabel id="demo-simple-select-label" 
                                                     inputProps={{ style:{color:'white'} }}
                                                     InputLabelProps={{ style:{color:'white'} }}
-                                                    sx={{mt:1}}
-                                  >Operacion</InputLabel>
+                                                    sx={{mt:1, color:'#5DADE2'}}
+                                  >OPERACION [SELEC.]</InputLabel>
                                   <Select
                                           labelId="operacion_select"
                                           size="small"
@@ -709,6 +735,17 @@ export default function OCargaFormDet() {
                                     }
                                   </Button>
 
+                                  <Button variant='contained' 
+                                    color='success' 
+                                    sx={{mt:1}}
+                                    onClick={ ()=>{
+                                      navigate(-1, { replace: true });
+                                      //window.location.reload();
+                                      }
+                                    }
+                                    >
+                                    ANTERIOR
+                                  </Button>
 
 
                             </Grid>
@@ -718,10 +755,9 @@ export default function OCargaFormDet() {
 
   </Grid>      
 
+</Grid>
 
-  </Grid>
-
-  </div>
+</div>
     </>    
   )
 }

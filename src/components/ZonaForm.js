@@ -1,15 +1,32 @@
-import {Grid,Card,CardContent,Typography,TextField,Button, CircularProgress} from '@mui/material'
+import {Grid,Card,CardContent,Typography,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl} from '@mui/material'
 //import { padding } from '@mui/system'
-import { useState,useEffect } from 'react';
+import {useState,useEffect,useRef} from 'react';
+import React from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
+import Tooltip from '@mui/material/Tooltip';
 
 export default function ZonaForm() {
-  
+    
+  //Orden directa
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   const [zona,setZona] = useState({
+      id_zona:'',
       nombre:'',
       descripcion:'',
       siglas:''
   })
+  //Seccion keyDown Formulario
+  const firstTextFieldRef = useRef(null);
+  const secondTextFieldRef = useRef(null);
+  const terceroTextFieldRef = useRef(null);
+  const cuartoTextFieldRef = useRef(null);
+  const handleKeyDown = (event, nextRef) => {
+    if (event.key === "Enter") {
+      nextRef.current.focus();
+    }
+  };
+  /////////////////////////////////////////////////////////
 
   const [cargando,setCargando] = useState(false);
   const [editando,setEditando] = useState(false);
@@ -23,13 +40,17 @@ export default function ZonaForm() {
     
     //Cambiooo para controlar Edicion
     if (editando){
-      await fetch(`http://localhost:4000/zona/${params.id}`, {
+      console.log(`${back_host}/zona/${params.id}`);
+      console.log(zona);
+      await fetch(`${back_host}/zona/${params.id}`, {
         method: "PUT",
         body: JSON.stringify(zona),
         headers: {"Content-Type":"application/json"}
       });
     }else{
-      await fetch("http://localhost:4000/zona", {
+      console.log(`${back_host}/zona`);
+      console.log(zona);
+      await fetch(`${back_host}/zona`, {
         method: "POST",
         body: JSON.stringify(zona),
         headers: {"Content-Type":"application/json"}
@@ -37,16 +58,14 @@ export default function ZonaForm() {
     }
 
     setCargando(false);
-    navigate("/");
-    
-    //console.log(zona);
+    navigate(`/zona`);
   };
   
   //Aqui se leen parametros en caso lleguen
   useEffect( ()=> {
     if (params.id){
       mostrarZona(params.id);
-    }  
+    }
   },[params.id]);
 
   //Rico evento change
@@ -57,12 +76,17 @@ export default function ZonaForm() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarZona = async (id) => {
-    const res = await fetch(`http://localhost:4000/zona/${id}`);
+    console.log(`${back_host}/zona/${id}`);
+    const res = await fetch(`${back_host}/zona/${id}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
-    setZona({nombre:data.nombre, descripcion:data.descripcion, siglas:data.siglas});
+    setZona({
+              id_zona:data.id_zona, 
+              nombre:data.nombre, 
+              descripcion:data.descripcion, 
+              siglas:data.siglas});
     //console.log(data);
-    //console.log(data.nombre);
+    //console.log(data.siglas);
     setEditando(true);
   };
 
@@ -79,43 +103,76 @@ export default function ZonaForm() {
                   }}
                   >
                 <Typography variant='5' color='white' textAlign='center'>
-                    {editando ? "EDITAR ZONA" : "CREAR ZONA"}
+                    {editando ? "EDITAR ZONA VENTA" : "CREAR ZONA VENTA"}
                 </Typography>
                 <CardContent>
                     <form onSubmit={handleSubmit} >
-                        <TextField variant="filled" 
-                                   label="nombre"
+                        <Tooltip title="SOLO SE PERMITE CODIGO NUMERICO">
+                        <TextField variant="outlined" 
+                                  label="CODIGO"
+                                  autoFocus 
+                                  fullWidth
+                                  sx={{display:'block',
+                                        margin:'.5rem 0'}}
+                                  name="id_zona"
+                                  value={zona.id_zona}
+                                  onChange={handleChange}
+                                  onKeyDown={(event) => handleKeyDown(event, secondTextFieldRef)}
+                                  onKeyPress={(event) => {
+                                      const numericRegex = /^[0-9]*$/
+                                      if (!numericRegex.test(event.key)) {
+                                          event.preventDefault();
+                                      }
+                                  }}
+                                  inputRef={firstTextFieldRef}                                   
+                                  inputProps={{ inputMode: 'numeric',
+                                                style:{color:'white'} }}
+                                  InputLabelProps={{ style:{color:'white'} }}
+                        />
+                        </Tooltip>
+
+                        <TextField variant="outlined" 
+                                   label="NOMBRE"
+                                   fullWidth
                                    sx={{display:'block',
                                         margin:'.5rem 0'}}
                                    name="nombre"
                                    value={zona.nombre}
                                    onChange={handleChange}
-                                   inputProps={{ style:{color:'white'} }}
+                                   onKeyDown={(event) => handleKeyDown(event, terceroTextFieldRef)}
+                                   inputRef={secondTextFieldRef}                                   
+                                   inputProps={{ style:{color:'white', textTransform: 'uppercase'} }}
                                    InputLabelProps={{ style:{color:'white'} }}
                         />
-                        <TextField variant="filled" 
-                                   label="descripcion"
-                                   multiline
+                        <TextField variant="outlined" 
+                                   label="DESCRIPCION"
+                                   fullWidth
                                    rows={2}
                                    sx={{display:'block',
                                         margin:'.5rem 0'}}
                                    name="descripcion"
                                    value={zona.descripcion}
                                    onChange={handleChange}
-                                   inputProps={{ style:{color:'white'} }}
+                                   onKeyDown={(event) => handleKeyDown(event, cuartoTextFieldRef)}
+                                   inputRef={terceroTextFieldRef}                                   
+
+                                   inputProps={{ style:{color:'white', textTransform: 'uppercase'} }}
                                    InputLabelProps={{ style:{color:'white'} }}
                          />
-                        <TextField variant="filled" 
-                                   label="siglas"
-                                   multiline
+                        <TextField variant="outlined" 
+                                   label="SIGLAS"
+                                   //multiline
+                                   fullWidth
                                    sx={{display:'block',
                                         margin:'.5rem 0'}}
                                    name="siglas"
                                    value={zona.siglas}
                                    onChange={handleChange}
-                                   inputProps={{ style:{color:'white'} }}
+                                   inputRef={cuartoTextFieldRef}                                   
+                                   inputProps={{ style:{color:'white', textTransform: 'uppercase'} }}
                                    InputLabelProps={{ style:{color:'white'} }}
                          />
+
                         <Button variant='contained' 
                                 color='primary' 
                                 type='submit'
@@ -130,6 +187,19 @@ export default function ZonaForm() {
                                 'Modificar' : 'Grabar')
                                 }
                         </Button>
+
+                        <Button variant='contained' 
+                                    color='success' 
+                                    //sx={{mt:1}}
+                                    onClick={ ()=>{
+                                      navigate(-1, { replace: true });
+                                      //window.location.reload();
+                                      }
+                                    }
+                                    >
+                              ANTERIOR
+                        </Button>
+
                     </form>
                 </CardContent>
             </Card>

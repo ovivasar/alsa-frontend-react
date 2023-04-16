@@ -5,9 +5,12 @@ import axios from 'axios';
 import FindIcon from '@mui/icons-material/FindInPage';
 import IconButton from '@mui/material/IconButton';
 import React from 'react';
+import Tooltip from '@mui/material/Tooltip';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 export default function VentaFormDet() {
-//export class VentaForm extends Component {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   //experimento
   const [updateTrigger, setUpdateTrigger] = useState({});
   const [razonSocialBusca, setRazonSocialBusca] = useState("");
@@ -69,14 +72,14 @@ export default function VentaFormDet() {
     
     //Cambiooo para controlar Edicion
     if (editando){
-      await fetch(`http://localhost:4000/ventadettrans/${params.cod}/${params.serie}/${params.num}/${params.elem}/${params.item}`, {
+      await fetch(`${back_host}/ventadettrans/${params.cod}/${params.serie}/${params.num}/${params.elem}/${params.item}`, {
         method: "PUT",
         body: JSON.stringify(ventaDet),
         headers: {"Content-Type":"application/json"}
       });
     }else{
       console.log(ventaDet);
-      await fetch("http://localhost:4000/ventadet", {
+      await fetch(`${back_host}/ventadet`, {
         method: "POST",
         body: JSON.stringify(ventaDet),
         headers: {"Content-Type":"application/json"}
@@ -111,7 +114,7 @@ export default function VentaFormDet() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarVenta = async (cod,serie,num,elem,item) => {
-    const res = await fetch(`http://localhost:4000/ventadettrans/${cod}/${serie}/${num}/${elem}/${item}`);
+    const res = await fetch(`${back_host}/ventadettrans/${cod}/${serie}/${num}/${elem}/${item}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
     setVentaDet({  
@@ -151,7 +154,7 @@ export default function VentaFormDet() {
                     <form onSubmit={handleSubmit} >
 
                     <Grid container spacing={0.5}>
-                        <Grid item xs={9}>
+                        <Grid item xs={8}>
                             <TextField variant="outlined" 
                                       label="RUC Transportista"
                                       //sx={{display:'block',
@@ -165,6 +168,7 @@ export default function VentaFormDet() {
                             />
                         </Grid>
                         <Grid item xs={2}>
+                          <Tooltip title="BUSCAR DATOS Internet">
                             <IconButton color="warning" aria-label="upload picture" component="label" size="small"
                               //sx={{display:'block',
                               //margin:'1rem 0'}}
@@ -177,12 +181,32 @@ export default function VentaFormDet() {
                             >
                               <FindIcon />
                             </IconButton>
+                          </Tooltip>    
+                        </Grid>
+                        <Grid item xs={2}>
+                          <Tooltip title="COPIAR DATOS Transporte Anterior">
+                            <IconButton color="primary" aria-label="upload picture" component="label" size="small"
+                              //sx={{display:'block',
+                              //margin:'1rem 0'}}
+                              sx={{mt:-1}}
+                              onClick = { () => {
+                                  ventaDet.tr_razon_social = "";
+                                  mostrarRazonSocialBusca(ventaDet.tr_ruc);
+                                }
+                              }
+                            >
+                              <ContentCopyIcon/>
+                            </IconButton>
+                          </Tooltip>    
                         </Grid>
 
-                    </Grid>
+                        
 
+                    </Grid>
+                        <Tooltip title={ventaDet.tr_razon_social || razonSocialBusca}>
                             <TextField variant="outlined" 
                                       label="RAZON SOCIAL"
+                                      fullWidth
                                       sx={{display:'block',
                                             margin:'.5rem 0'}}
                                       //sx={{mt:-3}}
@@ -193,9 +217,10 @@ export default function VentaFormDet() {
                                       inputProps={{ style:{color:'white'} }}
                                       InputLabelProps={{ style:{color:'white'} }}
                             />
-                        
+                        </Tooltip>  
                             <TextField variant="filled" 
                                       label="CHOFER"
+                                      fullWidth
                                       sx={{display:'block',
                                             margin:'.5rem 0'}}
                                       //sx={{mt:-3}}
@@ -209,6 +234,7 @@ export default function VentaFormDet() {
 
                             <TextField variant="filled" 
                                       label="CELULAR"
+                                      fullWidth
                                       sx={{display:'block',
                                             margin:'.5rem 0'}}
                                       //sx={{mt:-3}}
@@ -221,6 +247,7 @@ export default function VentaFormDet() {
 
                             <TextField variant="filled" 
                                       label="Placa"
+                                      fullWidth
                                       sx={{display:'block',
                                             margin:'.5rem 0'}}
                                       //sx={{mt:-3}}
@@ -231,8 +258,9 @@ export default function VentaFormDet() {
                                       InputLabelProps={{ style:{color:'white'} }}
                             />
 
-                            <TextField variant="filled" 
-                                    label="Fecha Carga"
+                            <TextField variant="outlined" 
+                                    //label="Fecha Carga"
+                                    fullWidth
                                     sx={{display:'block',
                                           margin:'.5rem 0'}}
                                     name="tr_fecha_carga"
@@ -261,7 +289,19 @@ export default function VentaFormDet() {
                                     ) : ('AGREGAR')
                                     }
                             </Button>
-                    
+
+                            <Button variant='contained' 
+                                    color='success' 
+                                    sx={{mt:0}}
+                                    onClick={ ()=>{
+                                      navigate(-1, { replace: true });
+                                      //window.location.reload();
+                                      }
+                                    }
+                                    >
+                                    ANTERIOR
+                            </Button>
+
 
                     </form>
                 </CardContent>

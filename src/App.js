@@ -13,6 +13,7 @@ import VentaList from "./components/VentaList";
 import VentaFormDet from "./components/VentaFormDet";
 import VentaFormDetTrans from "./components/VentaFormDetTrans"; //neww
 import ProductoList from "./components/ProductoList";
+import ProductoForm from "./components/ProductoForm";
 import OCargaList from "./components/OCargaList";
 import OCargaForm from "./components/OCargaForm";
 import OCargaFormDet from "./components/OCargaFormDet";
@@ -20,15 +21,24 @@ import OCargaFormDetEstiba from "./components/OCargaFormDetEstiba";
 import OCargaFormDet01 from "./components/OCargaFormDet01";
 import OCargaFormDet02 from "./components/OCargaFormDet02";
 import OCargaFormDet03 from "./components/OCargaFormDet03";
+import OCargaGuiaPendientesList from "./components/OCargaGuiaPendientesList";
+
+import VentaFormMovil from "./components/VentaFormMovil";
+import VentaFormDetTraslado from "./components/VentaFormDetTraslado";
 
 import Inicio from "./components/Inicio";
 import { useState,useEffect, useRef, Component, useMemo, useCallback } from 'react';
 
 function App() {
+  const [fecha_ini, setFechaIni] = useState("");
   const [fecha_proceso, setFechaProceso] = useState("");
   const handleChange = e => {
     //Para todos los demas casos ;)
-    setFechaProceso(e.target.value);
+    if (e.target.name=="fecha_ini"){
+      setFechaIni(e.target.value);  
+    }else{
+      setFechaProceso(e.target.value);
+    }
   }
   useEffect( ()=> {
       //procesar fecha actual al inicio
@@ -42,47 +52,60 @@ function App() {
       let strFecha = ano + "-" + strMes + "-" + strDia; //OK valido empieza por año
       //console.log(strFecha)
       setFechaProceso(strFecha);
+
+      let strFechaIni = ano + "-" + strMes + "-" + "01"; //OK valido empieza por año
+      setFechaIni(strFechaIni);
   },[]);
 
   return (
     <BrowserRouter>
-      <Menu fecha_proceso={fecha_proceso}>
+      <Menu fecha_ini={fecha_ini} fecha_proceso={fecha_proceso}>
 
       </Menu>
 
       <Grid container spacing={2}
-          direction="column"
+          //direction="column"
           alignItems="center"
           justifyContent="center"
       >
+          <Grid item xs={2}>
             <TextField variant="outlined" 
-                                            //label="fecha"
-                                            sx={{display:'block',
-                                                margin:'.5rem 0'}}
-                                            name="fecha_proceso"
-                                            size="small"
-                                            type="date"
-                                            value={fecha_proceso}
-                                            onChange={handleChange}
-                                            inputProps={{ style:{color:'white'} }}
-                                            InputLabelProps={{ style:{color:'white'} }}
+                //label="fecha"
+                sx={{display:'block',
+                    margin:'.5rem 0'}}
+                name="fecha_ini"
+                size="small"
+                type="date"
+                value={fecha_ini}
+                onChange={handleChange}
+                inputProps={{ style:{color:'white'} }}
+                InputLabelProps={{ style:{color:'white'} }}
               />
+          </Grid>
+          <Grid item xs={2}>
+            <TextField variant="outlined" 
+                //label="fecha"
+                sx={{display:'block',
+                    margin:'.5rem 0'}}
+                name="fecha_proceso"
+                size="small"
+                type="date"
+                value={fecha_proceso}
+                onChange={handleChange}
+                inputProps={{ style:{color:'white'} }}
+                InputLabelProps={{ style:{color:'white'} }}
+              />
+          </Grid>
       </Grid>
 
       <Container>
         <Routes>
           
-          { /*
-          <Route path="/ocargaplan/:fecha_proceso" element={<OCargaList />} />
-          <Route path="/ocarga/new" element={<OCargaForm />} />
-          <Route path="/ocarga/:ano/:numero/edit" element={<OCargaForm />} /> 
-          */ }
           <Route path="/ocargadet/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet />} />
           <Route path="/ocargadet/:fecha_proceso/:ano/:numero/:item/:modo/clon" element={<OCargaFormDet />} />
 
-
           <Route path="/ocarga/:ano/:numero/edit" element={<OCargaForm />} />
-          <Route path="/ocargadet/:fecha_proceso" element={<OCargaList />} />
+          <Route path="/ocargadet/:fecha_ini/:fecha_proceso" element={<OCargaList />} />
           
           { /* Agregar desde Panel (un registro01 Libre)
                Agregar Clonado desde Panel (un registro01 con Numero Orden y datos adicionales)
@@ -94,14 +117,21 @@ function App() {
           <Route path="/ocargadet01/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet01 />} />
           <Route path="/ocargadet02/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet02 />} />
           <Route path="/ocargadet03/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet03 />} />
+
+          <Route path="/ocargadetguiaspendientes/:fecha_proceso" element={<OCargaGuiaPendientesList />} />
           {/*  modo=edit, modo=clon  */}
+
+          <Route path="/ventadettraslado/:cod/:serie/:num/:elem/:fecha/new" element={<VentaFormDetTraslado />} />
+          <Route path="/ventadettraslado/:cod/:serie/:num/:elem/:item/edit" element={<VentaFormDetTraslado />} /> 
 
           <Route path="/ventadet/:cod/:serie/:num/:elem/:fecha/new" element={<VentaFormDet />} />
           <Route path="/ventadet/:cod/:serie/:num/:elem/:item/edit" element={<VentaFormDet />} /> 
           <Route path="/ventadettrans/:cod/:serie/:num/:elem/:item/edit" element={<VentaFormDetTrans />} /> 
-          <Route path="/venta/:fecha_proceso" element={<VentaList />} />          
+          <Route path="/venta/:fecha_ini/:fecha_proceso" element={<VentaList />} />          
           <Route path="/venta/new" element={<VentaForm />} />
+          <Route path="/ventamovil/new" element={<VentaFormMovil />} />
           <Route path="/venta/:cod/:serie/:num/:elem/edit" element={<VentaForm />} /> 
+          <Route path="/ventamovil/:cod/:serie/:num/:elem/edit" element={<VentaFormMovil />} /> 
 
           <Route path="/correntista" element={<CorrentistaList />} />          
           <Route path="/correntista/new" element={<CorrentistaForm />} />
@@ -118,6 +148,8 @@ function App() {
           <Route path="/zona/:id/edit" element={<ZonaForm />} />
 
           <Route path="/producto" element={<ProductoList />} />
+          <Route path="/producto/:id/edit" element={<ProductoForm />} />
+          <Route path="/producto/new" element={<ProductoForm />} />
           {/*Edit Route */}
         </Routes>
       </Container>

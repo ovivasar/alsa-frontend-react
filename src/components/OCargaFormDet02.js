@@ -12,6 +12,8 @@ import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { orange } from '@mui/material/colors';
 
 export default function OCargaFormDet() {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Seccion Modal
@@ -215,7 +217,7 @@ export default function OCargaFormDet() {
       strFecha = strFecha.substr(0,nPos);
     }
 
-    //const res = await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}/${item}`);
+    //const res = await fetch(`${back_host}/ocargadet/${ano}/${numero}/${item}`);
     //const data = await res.json();
     //setRegistrosdet(data);
     //setTabladet(data); //Copia para tratamiento de filtrado
@@ -302,7 +304,7 @@ export default function OCargaFormDet() {
     //Cambiooo para controlar Edicion
     if (editando){
       console.log("actualizando");
-      await fetch(`http://localhost:4000/ocargadet02/${params.ano}/${params.numero}/${params.item}`, {
+      await fetch(`${back_host}/ocargadet02/${params.ano}/${params.numero}/${params.item}`, {
         method: "PUT",
         body: JSON.stringify(ocargaDet),
         headers: {"Content-Type":"application/json"}
@@ -313,7 +315,8 @@ export default function OCargaFormDet() {
     
     setEditando(true);
     setUpdateTrigger(Math.random());//experimento
-    navigate(`/ocargadet/${params.fecha_proceso}`);
+    //navigate(`/ocargadet/${params.fecha_proceso}`);
+    window.history.back();
     
     //console.log(zona);
   };
@@ -346,7 +349,7 @@ export default function OCargaFormDet() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarOCarga = async (ano,numero,item) => {
-    const res = await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}/${item}`);
+    const res = await fetch(`${back_host}/ocargadet/${ano}/${numero}/${item}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
     setocargaDet({  
@@ -371,6 +374,7 @@ export default function OCargaFormDet() {
                 id_producto:data.id_producto,
                 descripcion:data.descripcion,
                 cantidad:data.cantidad, //new
+                unidad_medida:data.unidad_medida, //new
                 operacion:data.operacion,
                 tr_placa:data.tr_placa, ///new
                 tr_placacargado:data.tr_placacargado, ///new
@@ -465,7 +469,7 @@ export default function OCargaFormDet() {
                   >
                 
                 <CardContent >
-                    <form onSubmit={handleSubmit} >
+                    <form onSubmit={handleSubmit} autoComplete="off">
 
                             <Grid container spacing={0.5}
                                       direction="column"
@@ -533,7 +537,7 @@ export default function OCargaFormDet() {
                                 style={{color:'#4F8FE1'}}
                                 sx={{mt:0}}
                                 >
-                                CANT. : {ocargaDet.cantidad}
+                                CANT. : {ocargaDet.cantidad} {ocargaDet.unidad_medida}
                                 </Typography>
                                 
                                 <Typography marginTop="0.5rem" variant="subtitle2" 
@@ -664,6 +668,18 @@ export default function OCargaFormDet() {
                                     <CircularProgress color="inherit" size={24} />
                                     ) : ('GRABAR')
                                     }
+                                  </Button>
+
+                                  <Button variant='contained' 
+                                    color='success' 
+                                    sx={{mt:1}}
+                                    onClick={ ()=>{
+                                      navigate(-1, { replace: true });
+                                      //window.location.reload();
+                                      }
+                                    }
+                                    >
+                                    ANTERIOR
                                   </Button>
 
 

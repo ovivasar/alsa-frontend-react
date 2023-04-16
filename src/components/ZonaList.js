@@ -1,80 +1,230 @@
-import { useEffect, useState } from "react"
+import React from 'react';
+import { useEffect, useState, useMemo, differenceBy, useCallback } from "react"
 import { Button, Card, CardContent, Typography } from "@mui/material";
+import { useNavigate,useParams } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
+import FindIcon from '@mui/icons-material/FindInPage';
 import UpdateIcon from '@mui/icons-material/UpdateSharp';
-import SendIcon from '@mui/icons-material/Send';
+import Add from '@mui/icons-material/Add';
+
 import IconButton from '@mui/material/IconButton';
-import { useNavigate } from "react-router-dom";
+import swal from 'sweetalert';
+import Datatable, {createTheme} from 'react-data-table-component';
+import Checkbox from '@mui/material/Checkbox';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import ArrowDownward from '@mui/icons-material/ArrowDownward';
+import '../App.css';
+import 'styled-components';
 
 export default function ZonaList() {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
+  createTheme('solarized', {
+    text: {
+      //primary: '#268bd2',
+      primary: '#ffffff',
+      secondary: '#2aa198',
+    },
+    background: {
+      //default: '#002b36',
+      default: '#1e272e'
+    },
+    context: {
+      //background: '#cb4b16',
+      background: '#1e272e',
+      text: '#FFFFFF',
+    },
+    divider: {
+      default: '#073642',
+    },
+    action: {
+      button: 'rgba(0,0,0,.54)',
+      hover: 'rgba(0,0,0,.08)',
+      disabled: 'rgba(0,0,0,.12)',
+    },
+  }, 'dark');
+
+  //experimento
+  const [updateTrigger, setUpdateTrigger] = useState({});
+
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [toggleCleared, setToggleCleared] = useState(false);
+	//const [data, setData] = useState(tableDataItems);
+  const [registrosdet,setRegistrosdet] = useState([]);
+  const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado
+
+  const handleRowSelected = useCallback(state => {
+		setSelectedRows(state.selectedRows);
+	}, []);
   
-  const [zonas,setZonas] = useState([]);
-  const navigate = useNavigate();
+  const contextActions = useMemo(() => {
+    //console.log("asaaa");
+		const handleDelete = () => {
+			var strSeleccionado;
+      strSeleccionado = selectedRows.map(r => r.id_zona);
+			confirmaEliminacion(strSeleccionado);
+		};
 
-  const cargaZona = async () => {
-    const response = await fetch('http://localhost:4000/zona');
+    const handleUpdate = () => {
+			var strSeleccionado;
+      strSeleccionado = selectedRows.map(r => r.id_zona);
+			navigate(`/zona/${strSeleccionado}/edit`);
+		};
+
+		return (
+      <>
+			<Button key="delete" onClick={handleDelete} >
+        ELIMINAR
+        <DeleteIcon></DeleteIcon>
+			</Button>
+			<Button key="modificar" onClick={handleUpdate} >
+        MODIFICAR
+      <UpdateIcon/>
+			</Button>
+
+      </>
+		);
+	}, [registrosdet, selectedRows, toggleCleared]);
+
+  const actions = (
+    	<IconButton color="primary" 
+        onClick = {()=> {
+                      navigate(`/zona/new`);
+                  }
+                }
+      >
+    		<Add />
+    	</IconButton>
+  );
+
+  //////////////////////////////////////////////////////////
+  //const [registrosdet,setRegistrosdet] = useState([]);
+  //////////////////////////////////////////////////////////
+  const cargaRegistro = async () => {
+    const response = await fetch(`${back_host}/zona`);
     const data = await response.json();
-    setZonas(data);
-    //console.log(data);
+    setRegistrosdet(data);
+    setTabladet(data); //Copia para tratamiento de filtrado
   }
+  //////////////////////////////////////
+  const columnas = [
+    { name:'CODIGO', 
+      selector:row => row.id_zona,
+      sortable: true,
+      width: '110px'
+      //key:true
+    },
+    { name:'NOMBRE', 
+      selector:row => row.nombre,
+      //width: '350px',
+      sortable: true
+    },
+    { name:'DESCRIPCION', 
+      selector:row => row.descripcion,
+      width: '150px',
+      sortable: true
+    }
+  ];
+  
+  const confirmaEliminacion = (id_registro)=>{
+    swal({
+      title:"Eliminar Zona",
+      text:"Seguro ?",
+      icon:"warning",
+      buttons:["No","Si"]
+    }).then(respuesta=>{
+        if (respuesta){
+          eliminarRegistroDet(id_registro);
+          setToggleCleared(!toggleCleared);
+          setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.id_zona !== id_registro));
+          
+          setTimeout(() => { // Agrega una función para que se ejecute después del tiempo de espera
+            setUpdateTrigger(Math.random());//experimento
+          }, 200);
+          //setUpdateTrigger(Math.random());//experimento
+  
+          swal({
+            text:"Zona de Entrega: se ha eliminado con exito",
+            icon:"success",
+            timer:"2000"
+          });
+      }
+    })
+  }
+ 
+  const navigate = useNavigate();
+  //Para recibir parametros desde afuera
+  const params = useParams();
 
-  const eliminarZona = async (id_zona) => {
-    await fetch(`http://localhost:4000/zona/${id_zona}`, {
+  const eliminarRegistroDet = async (id_registro) => {
+    await fetch(`${back_host}/zona/${id_registro}`, {
       method:"DELETE"
     });
-    
-    setZonas(zonas.filter(zonas => zonas.id_zona !== id_zona));
+    //setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.id_zona !== id_registro));
     //console.log(data);
   }
-  
+  const actualizaValorFiltro = e => {
+    //setValorBusqueda(e.target.value);
+    filtrar(e.target.value);
+  }
+  const filtrar=(strBusca)=>{
+    var resultadosBusqueda = [];
+    resultadosBusqueda = tabladet.filter((elemento) => {
+      if (elemento.nombre.toString().toLowerCase().includes(strBusca.toLowerCase())
+        ){
+            return elemento;
+        }
+    });
+    setRegistrosdet(resultadosBusqueda);
+}
+
+//////////////////////////////////////////////////////////
   useEffect( ()=> {
-    cargaZona()
-  }, [])
+      cargaRegistro();
+  },[updateTrigger])
+  //////////////////////////////////////////////////////////
 
-  return (
+ return (
   <>
-    <div>Zonas Venta </div>
-    {
-      zonas.map((zona) => (
-        <Card style={{
-          marginBottom:".5rem",
-          backgroundColor:'#1e272e',
-          height:'3rem',
-          marginTop:".5rem",
-          }}
-          key={zona.id_zona}
-        >
-          <CardContent style = {{
-            display:"flex",
-            justifyContent:"normal"
-            }}>
-            
-            <div>
-              <IconButton color="primary" aria-label="upload picture" component="label" size="small"
-                          onClick = {()=> navigate(`/zona/${zona.id_zona}/edit`)}
-              >
-                <UpdateIcon />
-              </IconButton>
+    <div> 
+      <TextField fullWidth variant="outlined" color="success" size="small"
+                                   label="FILTRAR"
+                                   sx={{display:'block',
+                                        margin:'.5rem 0'}}
+                                   name="busqueda"
+                                   placeholder='Zona'
+                                   onChange={actualizaValorFiltro}
+                                   inputProps={{ style:{color:'white'} }}
+                                   InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          <FindIcon />
+                                        </InputAdornment>
+                                      ),
+                                      style:{color:'white'} 
+                                  }}
+      />
+    </div>
 
-              <IconButton color="warning" aria-label="upload picture" component="label" size="small"
-                          onClick = { () => eliminarZona(zona.id_zona)}
-              >
-                <DeleteIcon />
-              </IconButton>
 
-            </div>
-
-              <div style={{color:'white'}} >
-              <Typography fontSize={15} marginTop="0.5rem" >{zona.nombre}</Typography>
-              </div>
-              <div style={{color:'white'}}  hidden='true'>
-              <Typography >{zona.id_zona}</Typography>
-              </div>
-
-          </CardContent>
-        </Card>
-      ))
-    }
+    <Datatable
+      title="Gestion de Zonas Venta"
+      theme="solarized"
+      columns={columnas}
+      data={registrosdet}
+      selectableRows
+      contextActions={contextActions}
+      actions={actions}
+			onSelectedRowsChange={handleRowSelected}
+			clearSelectedRows={toggleCleared}
+      //pagination
+      selectableRowsComponent={Checkbox} // Pass the function only
+      sortIcon={<ArrowDownward />}  
+      dense={true}
+      //customStyles={{ rows: { minHeight: '10px' } }}
+    >
+    </Datatable>
 
   </>
   );

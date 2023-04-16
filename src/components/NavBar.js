@@ -1,7 +1,6 @@
 import {AppBar, Box, Button, Container, Toolbar, Typography} from "@mui/material";
 import {Link,useNavigate} from "react-router-dom";
 import IconButton from '@mui/material/IconButton';
-import AddBoxRoundedIcon from '@mui/icons-material/AddToQueue';
 
 import HomeIcon from '@mui/icons-material/Home';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
@@ -10,12 +9,12 @@ import PlaceIcon from '@mui/icons-material/Place';
 import WhereToVoteIcon from '@mui/icons-material/WhereToVote';
 import QrCodeIcon from '@mui/icons-material/QrCode';
 import { blueGrey } from '@mui/material/colors';
+import Tooltip from '@mui/material/Tooltip';
 
 import { useState,useEffect, useRef, Component, useMemo, useCallback } from 'react';
 
 export default function NavBar(props) {
   const navigate  = useNavigate();
-  //const [fecha_proceso, setFechaProceso] = useState("");
 
   return (
     <Box sx={{ flexGrow:1 }} >
@@ -32,26 +31,32 @@ export default function NavBar(props) {
                       <HomeIcon />
                     </IconButton>
 
-                    <IconButton  sx={{ flexGrow:1,color: blueGrey[300] }}
+                    <Tooltip title="RESUMEN Ventas">
+                    <IconButton  
+                        sx={{ flexGrow:1,color: blueGrey[300] }}
                         aria-label="upload picture" component="label" size="large"
                                 onClick = {()=> {
-                                  navigate(`/venta/${props.fecha_proceso}`);
+                                    navigate(`/venta/${props.fecha_ini}/${props.fecha_proceso}`);
                                                 }
                                 }
                     >
                       <FactCheckIcon />
                     </IconButton>
+                    </Tooltip>
 
+                    <Tooltip title="RESUMEN Ordenes Carga">
                     <IconButton  sx={{ flexGrow:1,color: blueGrey[300] }}
-                        aria-label="upload picture" component="label" size="large"
+                                component="label" size="large"
                                 onClick = {()=> {
-                                  navigate(`/ocargadet/${props.fecha_proceso}`);
+                                  navigate(`/ocargadet/${props.fecha_ini}/${props.fecha_proceso}`);
                                                 }
                                 }
-                    >
+                    >oc
                       <FactCheckIcon />
                     </IconButton>
+                    </Tooltip>
 
+                    <Tooltip title="Clientes, RUC">
                     <IconButton  sx={{ flexGrow:1,color: blueGrey[300] }}
                         aria-label="upload picture" component="label" size="large"
                                 onClick = {()=> {
@@ -61,7 +66,9 @@ export default function NavBar(props) {
                     >
                       <GroupIcon />
                     </IconButton>
-
+                    </Tooltip>
+                    
+                    <Tooltip title="Zonas de Venta">
                     <IconButton  sx={{ flexGrow:1,color: blueGrey[300] }}
                         color="primary" aria-label="upload picture" component="label" size="large"
                                 onClick = {()=> {
@@ -71,7 +78,9 @@ export default function NavBar(props) {
                     >
                       <PlaceIcon />
                     </IconButton>
-
+                    </Tooltip>
+                    
+                    <Tooltip title="Zonas de Entrega">
                     <IconButton  sx={{ flexGrow:1,color: blueGrey[300] }}
                         aria-label="upload picture" component="label" size="large"
                                 onClick = {()=> {
@@ -81,7 +90,9 @@ export default function NavBar(props) {
                     >
                       <WhereToVoteIcon />
                     </IconButton>
-
+                    </Tooltip>
+                    
+                    <Tooltip title="Productos">
                     <IconButton  sx={{ flexGrow:1,color: blueGrey[300] }}
                         aria-label="upload picture" component="label" size="large"
                                 onClick = {()=> {
@@ -91,6 +102,7 @@ export default function NavBar(props) {
                     >
                       <QrCodeIcon />
                     </IconButton>
+                    </Tooltip>
 
             </Toolbar>
         </Container>

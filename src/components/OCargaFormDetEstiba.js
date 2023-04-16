@@ -8,7 +8,8 @@ import IconButton from '@mui/material/IconButton';
 import React from 'react';
 
 export default function OCargaFormDetEstiba() {
-//export class VentaForm extends Component {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   //experimento
   const [updateTrigger, setUpdateTrigger] = useState({});
   //const [razonSocialBusca, setRazonSocialBusca] = useState("");
@@ -79,14 +80,14 @@ export default function OCargaFormDetEstiba() {
     
     //Cambiooo para controlar Edicion
     if (editando){
-      await fetch(`http://localhost:4000/ventadet/${params.cod}/${params.serie}/${params.num}/${params.elem}/${params.item}`, {
+      await fetch(`${back_host}/ventadet/${params.cod}/${params.serie}/${params.num}/${params.elem}/${params.item}`, {
         method: "PUT",
         body: JSON.stringify(ventaDet),
         headers: {"Content-Type":"application/json"}
       });
     }else{
       console.log(ventaDet);
-      await fetch("http://localhost:4000/ventadet", {
+      await fetch(`${back_host}/ventadet`, {
         method: "POST",
         body: JSON.stringify(ventaDet),
         headers: {"Content-Type":"application/json"}
@@ -115,7 +116,7 @@ export default function OCargaFormDetEstiba() {
 
   const cargaZonaEntregaCombo = () =>{
     axios
-    .get('http://localhost:4000/zonadet')
+    .get(`${back_host}/zonadet`)
     .then((response) => {
         setZonaEntregaSelect(response.data);
     })
@@ -125,7 +126,7 @@ export default function OCargaFormDetEstiba() {
   }
   const cargaProductoCombo = () =>{
     axios
-    .get('http://localhost:4000/producto')
+    .get(`${back_host}/producto`)
     .then((response) => {
         setProductoSelect(response.data);
     })
@@ -158,7 +159,7 @@ export default function OCargaFormDetEstiba() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarVenta = async (cod,serie,num,elem,item) => {
-    const res = await fetch(`http://localhost:4000/ventadet/${cod}/${serie}/${num}/${elem}/${item}`);
+    const res = await fetch(`${back_host}/ventadet/${cod}/${serie}/${num}/${elem}/${item}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
     setVentaDet({  

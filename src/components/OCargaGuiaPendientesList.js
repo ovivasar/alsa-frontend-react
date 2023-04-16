@@ -1,11 +1,10 @@
 import React from 'react';
 import { useEffect, useState, useMemo, differenceBy, useCallback } from "react"
-import { Button, Card, CardContent, Typography } from "@mui/material";
+import { Grid, Button, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate,useParams } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import FindIcon from '@mui/icons-material/FindInPage';
 import UpdateIcon from '@mui/icons-material/UpdateSharp';
-import SendIcon from '@mui/icons-material/Send';
 import Add from '@mui/icons-material/Add';
 
 import IconButton from '@mui/material/IconButton';
@@ -18,8 +17,13 @@ import InputAdornment from '@mui/material/InputAdornment';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import '../App.css';
 import 'styled-components';
+import { sizeWidth } from '@mui/system';
 
-export default function ProductoList() {
+import { utils, writeFile } from 'xlsx';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+
+export default function OCargaGuiaPendientesList() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   createTheme('solarized', {
@@ -62,24 +66,15 @@ export default function ProductoList() {
   
   const contextActions = useMemo(() => {
     //console.log("asaaa");
-		const handleDelete = () => {
-			var strSeleccionado;
-      strSeleccionado = selectedRows.map(r => r.id_producto);
-			confirmaEliminacion(strSeleccionado);
-		};
 
     const handleUpdate = () => {
 			var strSeleccionado;
-      strSeleccionado = selectedRows.map(r => r.id_producto);
-			navigate(`/producto/${strSeleccionado}/edit`);
+      strSeleccionado = selectedRows.map(r => r.id_zona);
+			navigate(`/zona/${strSeleccionado}/edit`);
 		};
 
 		return (
       <>
-			<Button key="delete" onClick={handleDelete} >
-        ELIMINAR
-        <DeleteIcon></DeleteIcon>
-			</Button>
 			<Button key="modificar" onClick={handleUpdate} >
         MODIFICAR
       <UpdateIcon/>
@@ -92,7 +87,7 @@ export default function ProductoList() {
   const actions = (
     	<IconButton color="primary" 
         onClick = {()=> {
-                      navigate(`/producto/new`);
+                      navigate(`/zona/new`);
                   }
                 }
       >
@@ -104,64 +99,60 @@ export default function ProductoList() {
   //const [registrosdet,setRegistrosdet] = useState([]);
   //////////////////////////////////////////////////////////
   const cargaRegistro = async () => {
-    const response = await fetch(`${back_host}/producto`);
+    var response;
+    let strFecha="";
+    //La data, corresponde al mes de login
+    //le cargaremos fecha actual si parametro no existe
+
+    strFecha=params.fecha_proceso;
+    //console.log(strFecha);
+    if (params.fecha_proceso===null){
+      let nPos=0;
+      const fecha = new Date(); //ok fecha y hora actual
+      strFecha = fecha.toISOString(); //formato texto
+      nPos = strFecha.indexOf('T');
+      strFecha = strFecha.substr(0,nPos);
+    }
+
+    response = await fetch(`${back_host}/ocargadetguiaspendientes/${strFecha}`);
     const data = await response.json();
     setRegistrosdet(data);
     setTabladet(data); //Copia para tratamiento de filtrado
   }
   //////////////////////////////////////
   const columnas = [
-    { name:'CODIGO', 
-      selector:row => row.id_producto,
+    { name:'AÑO', 
+      selector:row => row.ano,
       sortable: true,
       width: '110px'
       //key:true
     },
-    { name:'NOMBRE', 
-      selector:row => row.nombre,
+    { name:'ORDEN', 
+      selector:row => row.numero,
       //width: '350px',
       sortable: true
     },
-    { name:'UNIDAD', 
-      selector:row => row.id_unidad_medida,
+    { name:'GUIA', 
+      selector:row => row.guia,
+      width: '150px',
+      sortable: true
+    },
+    { name:'MONTO', 
+      selector:row => row.e_monto,
+      width: '150px',
+      sortable: true
+    },
+    { name:'GRUPO', 
+      selector:row => row.grupo,
       width: '150px',
       sortable: true
     }
   ];
-  
-  const confirmaEliminacion = (id_registro)=>{
-    swal({
-      title:"Eliminar Producto",
-      text:"Seguro ?",
-      icon:"warning",
-      buttons:["No","Si"]
-    }).then(respuesta=>{
-        if (respuesta){
-          eliminarRegistroDet(id_registro);
-          setToggleCleared(!toggleCleared);
-          setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.id_producto !== id_registro));
-          setUpdateTrigger(Math.random());//experimento
-  
-          swal({
-            text:"Producto se ha eliminado con exito",
-            icon:"success",
-            timer:"2000"
-          });
-      }
-    })
-  }
  
   const navigate = useNavigate();
   //Para recibir parametros desde afuera
   const params = useParams();
 
-  const eliminarRegistroDet = async (id_registro) => {
-    await fetch(`${back_host}/producto/${id_registro}`, {
-      method:"DELETE"
-    });
-    //setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.id_producto !== id_registro));
-    //console.log(data);
-  }
   const actualizaValorFiltro = e => {
     //setValorBusqueda(e.target.value);
     filtrar(e.target.value);
@@ -177,7 +168,7 @@ export default function ProductoList() {
     setRegistrosdet(resultadosBusqueda);
 }
 
-  //////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
   useEffect( ()=> {
       cargaRegistro();
   },[updateTrigger])
@@ -191,7 +182,7 @@ export default function ProductoList() {
                                    sx={{display:'block',
                                         margin:'.5rem 0'}}
                                    name="busqueda"
-                                   placeholder='Producto'
+                                   placeholder='Zona'
                                    onChange={actualizaValorFiltro}
                                    inputProps={{ style:{color:'white'} }}
                                    InputProps={{
@@ -205,8 +196,9 @@ export default function ProductoList() {
       />
     </div>
 
+
     <Datatable
-      title="Gestion de Productos"
+      title="Guias Pendientes"
       theme="solarized"
       columns={columnas}
       data={registrosdet}
@@ -216,13 +208,47 @@ export default function ProductoList() {
 			onSelectedRowsChange={handleRowSelected}
 			clearSelectedRows={toggleCleared}
       //pagination
-
       selectableRowsComponent={Checkbox} // Pass the function only
-      sortIcon={<ArrowDownward />}  
-
+      sortIcon={<ArrowDownward />}
+      dense={true}
+      //customStyles={{ rows: { minHeight: '10px' } }}
     >
     </Datatable>
 
   </>
   );
 }
+
+
+/*
+
+const App = () => {
+  const [registrosdet, setRegistrosdet] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch('https://alsa-backend-js-production.up.railway.app/ocargadetguiaspendientes');
+      const data = await response.json();
+      setRegistrosdet(data);
+    };
+    fetchData();
+  }, []);
+
+  const handleModificar = (row) => {
+    // Aquí puedes agregar la lógica para modificar la fila seleccionada
+    console.log(`Modificar fila ${row.numero}`);
+  };
+
+  return (
+    <DataTable
+      title="Listado de guías pendientes"
+      columns={columns}
+      data={registrosdet}
+      highlightOnHover
+      pointerOnHover
+    />
+  );
+};
+
+export default App;
+*/

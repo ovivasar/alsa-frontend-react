@@ -9,13 +9,13 @@ import React from 'react';
 import CheckIcon from '@mui/icons-material/CheckOutlined';
 import ToggleButton from '@mui/material/ToggleButton';
 
-export default function VentaFormDet() {
+export default function VentaFormDetTraslado() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
 
   //experimento
   const [unidad_select] = useState([
-    {unidad_medida:'TNE'},
+    {unidad_medida:'TN'},
     {unidad_medida:'BLS'}
   ]);
   const [moneda_select] = useState([
@@ -85,7 +85,7 @@ export default function VentaFormDet() {
       ref_documento_id:'',  
       ref_razon_social:'',  
       ref_direccion:'',   
-      unidad_medida:'TNE',   //new
+      unidad_medida:'',   //new
       id_zona_entrega:'',
       zona_entrega:'',
       id_formapago:'', 
@@ -95,7 +95,7 @@ export default function VentaFormDet() {
       fecha_entrega2:'', 
       id_producto:'',
       descripcion:'',
-      precio_unitario:'',
+      precio_unitario:'0',
       porc_igv:'18',
       moneda:'USD',//new
       cantidad:'',
@@ -217,7 +217,6 @@ export default function VentaFormDet() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarVenta = async (cod,serie,num,elem,item) => {
-    console.log(`${back_host}/ventadet/${cod}/${serie}/${num}/${elem}/${item}`);
     const res = await fetch(`${back_host}/ventadet/${cod}/${serie}/${num}/${elem}/${item}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
@@ -233,7 +232,6 @@ export default function VentaFormDet() {
                 cond_venta:data.cond_venta,       //new
                 cond_entrega:data.cond_entrega,   //new
                 fecha_entrega2:data.fecha_entrega2,   //new
-                moneda:data.moneda,   //new
                 id_producto:data.id_producto,
                 descripcion:data.descripcion,
                 precio_unitario:data.precio_unitario,
@@ -255,9 +253,12 @@ export default function VentaFormDet() {
           alignItems="center"
           justifyContent="center"
     >
+        
+        {/* Seccion Agregado de Detalles */}
+
         <Grid item xs={3}>
+            
             <Card sx={{mt:2}}
-                  //sx={{ minWidth: 275 }}            
                   style={{
                     background:'#1e272e',
                     padding:'1rem'
@@ -267,69 +268,6 @@ export default function VentaFormDet() {
                 
                 <CardContent >
                     <form onSubmit={handleSubmit} autoComplete="off">
-
-                    <Grid container spacing={0.5}>
-                        <Grid item xs={4}>
-                            <TextField variant="outlined" 
-                                      label="RUC FACT."
-                                      //size="small"
-                                      //sx={{display:'block',
-                                      //      margin:'.5rem 0'}}
-                                      sx={{mt:-1}}
-                                      name="ref_documento_id"
-                                      value={ventaDet.ref_documento_id}
-                                      onChange={handleChange}
-                                      inputProps={{ style:{color:'white',width: 140} }}
-                                      InputLabelProps={{ style:{color:'white'} }}
-                            />
-                        </Grid>
-                        <Grid item xs={8}>
-                            <IconButton color="warning" aria-label="upload picture" component="label" size="small"
-                              //sx={{display:'block',
-                              //margin:'1rem 0'}}
-                              sx={{mt:-1}}
-                              onClick = { () => {
-                                  ventaDet.ref_razon_social = "";
-                                  mostrarRazonSocialBusca(ventaDet.ref_documento_id);
-                                  //ventaDet.porc_igv = "";
-                                  //mostrarIgvProducto(ventaDet.id_producto);
-                                }
-                              }
-                            >
-                              <FindIcon />
-                            </IconButton>
-                        </Grid>
-
-                    </Grid>
-                    
-                            <TextField variant="outlined" 
-                                      label="RAZON SOCIAL FACT."
-                                      fullWidth
-                                      //size="small"
-                                      sx={{display:'block',
-                                            margin:'.5rem 0'}}
-                                      //sx={{mt:-3}}
-                                      name="ref_razon_social"
-                                      //ref={txtRazonSocialRef} //para el rico foco solo con input funciona
-                                      value={ventaDet.ref_razon_social || razonSocialBusca}
-                                      onChange={handleChange}
-                                      inputProps={{ style:{color:'white'} }}
-                                      InputLabelProps={{ style:{color:'white'} }}
-                            />
-                            <TextField variant="outlined" 
-                                      label="DIR. LLEGADA"
-                                      fullWidth
-                                      //size="small"
-                                      sx={{display:'block',
-                                            margin:'.5rem 0'}}
-                                      //sx={{mt:-3}}
-                                      name="ref_direccion"
-                                      value={ventaDet.ref_direccion}
-                                      onChange={handleChange}
-                                      inputProps={{ style:{color:'white',textAlign: 'left'} }}
-                                      InputLabelProps={{ style:{color:'white'}
-                                    }}
-                            />
 
                             <Box sx={{ minWidth: 120 }}
                                  // sx={{mt:-3}}
@@ -398,91 +336,6 @@ export default function VentaFormDet() {
                                     </FormControl>
                             </Box>
 
-                            <Grid container spacing={0.5}
-
-                            >
-                                <Grid item xs={7}>
-                                    <TextField variant="filled" 
-                                          label="P.UNIT"
-                                          size="small"
-                                          fullWidth
-                                          sx={{display:'block',
-                                                margin:'.5rem 0'}}
-                                          //sx={{mt:-3}}
-                                          name="precio_unitario"
-                                          value={ventaDet.precio_unitario}
-                                          onChange={handleChange}
-                                          inputProps={{ style:{color:'white',textAlign: 'center', fontSize: "1.5rem"} }}
-                                          InputLabelProps={{ style:{color:'white'}
-                                        }}
-                                    />
-                                </Grid>
-
-                                <Grid item xs={2}>
-                                        <Box sx={{mt:0}}>
-                                                <FormControl fullWidth>
-                                                  <InputLabel id="demo-simple-select-label" 
-                                                                    inputProps={{ style:{color:'white'} }}
-                                                                    InputLabelProps={{ style:{color:'white'} }}
-                                                                    sx={{mt:1, color:'#5DADE2'}}
-                                                  >DIV</InputLabel>
-                                                  <Select
-                                                          labelId="moneda_select"
-                                                          id={ventaDet.moneda}
-                                                          value={ventaDet.moneda}
-                                                          name="moneda"
-                                                          size="normal"
-                                                          sx={{display:'block',
-                                                          margin:'.75rem', color:"white"}}
-                                                          onChange={handleChange}
-                                                        >
-                                                          {   
-                                                              moneda_select.map(elemento => (
-                                                              <MenuItem key={elemento.moneda} value={elemento.moneda}>
-                                                                {elemento.moneda}
-                                                              </MenuItem>)) 
-                                                          }
-                                                  </Select>
-                                                </FormControl>
-                                        </Box>
-                                </Grid>
-
-                                <Grid item xs={1}>
-                                    <ToggleButton
-                                        value="check"
-                                        sx={{display:'block',
-                                        margin:'.8rem 0'}}
-                                        selected={igvselected}
-                                        onChange={() => {
-                                          setIgvSelected(!igvselected);
-                                          if (igvselected){
-                                            ventaDet.porc_igv=18;
-                                          }else{
-                                            ventaDet.porc_igv=0;
-                                          }
-                                          //console.log(igvselected);
-                                          //console.log(ventaDet.porc_igv);
-                                        }}
-                                      >
-                                        <CheckIcon color="warning"/>
-                                    </ToggleButton>
-                                </Grid>
-
-                                <Grid item xs={2}>
-                                    <TextField variant="filled" 
-                                          label="% IGV"
-                                          size="normal"
-                                          sx={{display:'block',margin:'.75rem 0'}}
-                                          //sx={{mt:-3}}
-                                          name="porc_igv"
-                                          value={ventaDet.porc_igv}
-                                          onChange={handleChange}
-                                          inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                          InputLabelProps={{ style:{color:'white'} }}
-                                    />
-                                </Grid>
-                            </Grid>
-
                             <Grid container spacing={0.5}>
 
                                   <Grid item xs={9}>
@@ -533,94 +386,8 @@ export default function VentaFormDet() {
 
                             </Grid>
 
-                            <Box sx={{ minWidth: 120 }}
-                                   //sx={{mt:-3}}
-                            >
-                                    <FormControl fullWidth>
-                                      <InputLabel id="demo-simple-select-label" 
-                                                  inputProps={{ style:{color:'white'} }}
-                                                  InputLabelProps={{ style:{color:'white'} }}
-                                                  sx={{mt:1, color:'#5DADE2'}}
-                                      >COND. PAGO [ SEL.]</InputLabel>
-                                      <Select
-                                        labelId="producto"
-                                        id={ventaDet.id_formapago}
-                                        value={ventaDet.id_formapago}
-                                        name="id_formapago"
-                                        size="small"
-                                        sx={{display:'block',
-                                        margin:'.5rem 0', color:"white"}}
-                                        label="Forma Pago"
-                                        onChange={handleChange}
-                                        inputProps={{ style:{color:'white'} }}
-                                        InputLabelProps={{ style:{color:'white'} }}
-                                      >
-                                        {   
-                                            formapago_select.map(elemento => (
-                                            <MenuItem   key={elemento.id_formapago} 
-                                                        value={elemento.id_formapago}>
-                                              {elemento.nombre}
-                                            </MenuItem>)) 
-                                        }
-                                      </Select>
-                                    </FormControl>
-                            </Box>
 
-                            <Box sx={{mt:1}}>
-                                    <FormControl fullWidth>
-                                      <InputLabel id="demo-simple-select-label" 
-                                                        inputProps={{ style:{color:'white'} }}
-                                                        InputLabelProps={{ style:{color:'white'} }}
-                                                        sx={{mt:1, color:'#5DADE2'}}
-                                      >COND. VENTA [ SEL.]</InputLabel>
-                                      <Select
-                                              labelId="cond_venta_select"
-                                              id={ventaDet.cond_venta}
-                                              value={ventaDet.cond_venta}
-                                              name="cond_venta"
-                                              size="small"
-                                              sx={{display:'block',
-                                              margin:'.1rem', color:"white"}}
-                                              label="Condicion Venta"
-                                              onChange={handleChange}
-                                            >
-                                              {   
-                                                  cond_venta_select.map(elemento => (
-                                                  <MenuItem key={elemento.cond_venta} value={elemento.cond_venta}>
-                                                    {elemento.cond_venta}
-                                                  </MenuItem>)) 
-                                              }
-                                      </Select>
-                                    </FormControl>
-                            </Box>
 
-                            <Box sx={{mt:1}}>
-                                    <FormControl fullWidth>
-                                      <InputLabel id="demo-simple-select-label" 
-                                                        inputProps={{ style:{color:'white'} }}
-                                                        InputLabelProps={{ style:{color:'white'} }}
-                                                        sx={{mt:1, color:'#5DADE2'}}
-                                      >COND. ENTREGA [ SEL.]</InputLabel>
-                                      <Select
-                                              labelId="cond_entrega_select"
-                                              id={ventaDet.cond_entrega}
-                                              value={ventaDet.cond_entrega}
-                                              name="cond_entrega"
-                                              size="small"
-                                              sx={{display:'block',
-                                              margin:'.1rem', color:"white"}}
-                                              label="Condicion Entrega"
-                                              onChange={handleChange}
-                                            >
-                                              {   
-                                                  cond_entrega_select.map(elemento => (
-                                                  <MenuItem key={elemento.cond_entrega} value={elemento.cond_entrega}>
-                                                    {elemento.cond_entrega}
-                                                  </MenuItem>)) 
-                                              }
-                                      </Select>
-                                    </FormControl>
-                            </Box>
 
                             <TextField variant="filled" 
                                       label="Observaciones"
@@ -654,10 +421,7 @@ export default function VentaFormDet() {
                                     sx={{mt:1}}
                                     type='submit'
                                     disabled={!ventaDet.cantidad || 
-                                              !ventaDet.precio_unitario ||
-                                              !ventaDet.ref_documento_id ||
-                                              !ventaDet.ref_razon_social ||
-                                              !ventaDet.ref_direccion ||
+                                              !ventaDet.unidad_medida ||
                                               !ventaDet.id_producto 
                                               }
                                     >

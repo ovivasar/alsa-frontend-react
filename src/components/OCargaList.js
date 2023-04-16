@@ -1,10 +1,9 @@
 import React from 'react';
 import { useEffect, useState, useMemo, differenceBy, useCallback } from "react"
-import { Button, Card, CardContent, Typography } from "@mui/material";
+import { Grid, Button, CircularProgress, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate,useParams } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import FindIcon from '@mui/icons-material/FindInPage';
-import UpdateIcon from '@mui/icons-material/UpdateSharp';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Add from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -19,10 +18,16 @@ import InputAdornment from '@mui/material/InputAdornment';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import '../App.css';
 import 'styled-components';
-import Box from '@mui/material/Box';
+
+import { utils, writeFile } from 'xlsx';
+
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 export default function OCargaList() {
   //Para recibir parametros desde afuera
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   const params = useParams();
 
   createTheme('solarized', {
@@ -49,7 +54,22 @@ export default function OCargaList() {
       disabled: 'rgba(0,0,0,.12)',
     },
   }, 'dark');
-
+  ///////////////////////
+  function exportToExcel(data) {
+    const worksheet = utils.json_to_sheet(data);
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, 'Datos');
+    writeFile(workbook, 'datos.xlsx');
+  }
+  /*function exportToExcel(data) {
+    const worksheet = utils.json_to_sheet(data);
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, 'Datos');
+    const excelBuffer = writeFile(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const dataUrl = URL.createObjectURL(blob);
+    window.open(dataUrl, '_blank');
+  }*/
   //experimento
   const [updateTrigger, setUpdateTrigger] = useState({});
 
@@ -59,6 +79,9 @@ export default function OCargaList() {
   const [registrosdet,setRegistrosdet] = useState([]); //Para vista principal
   const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado
   const [valorBusqueda, setValorBusqueda] = useState(""); //txt: rico filtrado
+  
+  const [valorVista, setValorVista] = useState("resumen");
+  const [eliminacionCompletada, setEliminacionCompletada] = useState(false);
 
   const handleRowSelected = useCallback(state => {
 		setSelectedRows(state.selectedRows);
@@ -129,16 +152,19 @@ export default function OCargaList() {
       navigate(`/ocargadet/${params.fecha_proceso}/${strAno}/${strNumero}/${nItem}/${sModo}/edit`);
 		};
 
+  
 		return (
       <>
 			<Button key="delete" onClick={handleDelete} >
        ELIMINAR <DeleteIcon/>
 			</Button>
 			
+      {/*
       <Button key="modificar" onClick={handleUpdate} >
        MODIFICAR<EditRoundedIcon/>
 			</Button>
-
+    */}
+    
       <Button key="modificar_grupo" onClick={handleUpdateGrupo} >
        MOD. GRUPO<EditRoundedIcon/>
 			</Button>
@@ -163,11 +189,16 @@ export default function OCargaList() {
   );
 
   const cargaRegistro = async () => {
+    var response;
+    let strFechaIni="";
     let strFecha="";
     //La data, corresponde al mes de login
     //le cargaremos fecha actual si parametro no existe
+    strFechaIni=params.fecha_ini;
+    console.log("Fecha ini:",strFechaIni);
+
     strFecha=params.fecha_proceso;
-    console.log(strFecha);
+    
     if (params.fecha_proceso===null){
       let nPos=0;
       const fecha = new Date(); //ok fecha y hora actual
@@ -176,7 +207,19 @@ export default function OCargaList() {
       strFecha = strFecha.substr(0,nPos);
     }
     
-    const response = await fetch(`http://localhost:4000/ocargaplan/${strFecha}`);
+    console.log("valor antes de cargar backend: ", valorVista);
+    //al reves por mientras
+    if (valorVista=="analisis"){
+      response = await fetch(`${back_host}/ocargaplan/${strFechaIni}/${strFecha}`);
+    }else{
+      if (valorVista=="diario"){
+        response = await fetch(`${back_host}/ocargaplan/${strFecha}/${strFecha}`);
+      }else{
+        response = await fetch(`${back_host}/ocarga/${strFecha}`);
+      }
+    }
+
+    
     const data = await response.json();
     setRegistrosdet(data);
     setTabladet(data); //Copia para tratamiento de filtrado
@@ -192,89 +235,56 @@ export default function OCargaList() {
       selector:row => row.pedido,
       sortable: true
     },
-    { name:'ENTREGA', 
-      selector:row => row.zona_entrega,
-      sortable: true
-    },
     { name:'NUMERO', 
       selector:row => row.numero,
+      sortable: true
+    },
+    { name:'ESTADO', 
+      selector:row => row.estado,
+      sortable: true
+    },
+    { name:'CLIENTE', 
+      selector:row => row.ref_razon_social,
       sortable: true
     },
     { name:'ITEM', 
       selector:row => row.item,
       sortable: true
     },
-    { name:'GUIA', 
-      selector:row => row.guia,
+    { name:'DESCRIPCION', 
+      selector:row => row.descripcion,
       sortable: true
     },
     { name:'OPERACION', 
       selector:row => row.operacion,
       sortable: true
     },
+    { name:'ENTREGA', 
+      selector:row => row.zona_entrega,
+      sortable: true
+    },
+    { name:'GUIA', 
+      selector:row => row.guia01,
+      sortable: true
+    },
     { name:'TICKET', 
       selector:row => row.ticket,
-      sortable: true
-    },
-    { name:'DESCRIPCION', 
-      selector:row => row.descripcion,
-      sortable: true
-    },
-    { name:'RAZON SOCIAL', 
-      selector:row => row.ref_razon_social,
-      sortable: true
-    },
-    { name:'DESAG. SACOS', 
-      selector:row => row.desag_sacos,
-      sortable: true
-    },
-    { name:'DESAG. TN.', 
-      selector:row => row.desag_tn,
-      sortable: true
-    },
-    { name:'TOTAL SACOS', 
-      selector:row => row.llega_sacos,
-      sortable: true
-    },
-    { name:'OPERACION2', 
-      selector:row => row.operacion2,
-      sortable: true
-    },
-    { name:'TRANSB. SACOS', 
-      selector:row => row.sacos_transb,
-      sortable: true
-    },
-    { name:'SACOS DESCARG', 
-      selector:row => row.sacos_descar,
       sortable: true
     },
     { name:'LOTE ASIGNADO', 
       selector:row => row.lote_asignado,
       sortable: true
     },
-    { name:'SACOS CARGA', 
-      selector:row => row.sacos_carga,
-      sortable: true
-    },
     { name:'LOTE PROCEDENCIA', 
       selector:row => row.lote_procedencia,
       sortable: true
     },
-    { name:'SACOS FINAL', 
-      selector:row => row.sacos_final,
-      sortable: true
-    },
-    
-    { name:'TARA DESAG.', 
-      selector:row => row.tara_desag,
-      sortable: true
-    },
     { name:'PESO V.', 
-      selector:row => row.e_peso,
+      selector:row => row.e_peso01,
       sortable: true
     },
     { name:'MONTO S/', 
-      selector:row => row.e_monto,
+      selector:row => row.e_monto01,
       sortable: true
     },
     { name:'RHH', 
@@ -293,15 +303,47 @@ export default function OCargaList() {
       selector:row => row.e_estibadores,
       sortable: true
     },
-    
     { name:'AÑO', 
       selector:row => row.ano,
       sortable: true
     }
-
   ];
-  
-  const confirmaEliminacion = (ano,numero,item)=>{
+
+  const confirmaEliminacion = async(ano,numero,item) =>{
+    //Eliminar por numeor y item, estamos en vista planilla
+    await swal({
+      title:"Eliminar Registro",
+      text:"Seguro ?",
+      icon:"warning",
+      buttons:["No","Si"]
+    }).then(respuesta=>{
+        if (respuesta){
+          //console.log(ano,numero,item);
+          //console.log(ano,numero[0],item[0]);
+          eliminarRegistroSeleccionado(ano,numero[0],item[0]);
+
+          setToggleCleared(!toggleCleared);
+          setRegistrosdet(registrosdet.filter(
+                          registrosdet => (registrosdet.ano !== ano &&
+                                          registrosdet.numero !== numero[0] && 
+                                          registrosdet.item !== item[0])
+                          ));
+          
+          setTimeout(() => { // Agrega una función para que se ejecute después del tiempo de espera
+              setUpdateTrigger(Math.random());//experimento
+          }, 200);
+         
+          
+          swal({
+            text:"Venta se ha eliminado con exito",
+            icon:"success",
+            timer:"2000"
+          });
+      }
+    })
+  }
+
+/*  const confirmaEliminacion = (ano,numero,item)=>{
     //Eliminar por numeor y item, estamos en vista planilla
     swal({
       title:"Eliminar Registro",
@@ -327,19 +369,26 @@ export default function OCargaList() {
       }
     })
   }
- 
+ */
+
   const navigate = useNavigate();
 
   const eliminarRegistroSeleccionado = async (ano,numero,item) => {
-    await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}/${item}`, {
+    await fetch(`${back_host}/ocargadet/${ano}/${numero}/${item}`, {
       method:"DELETE"
     });
+    setEliminacionCompletada(true); 
     //console.log(data);
   }
 
   const actualizaValorFiltro = e => {
     setValorBusqueda(e.target.value);
     filtrar(e.target.value);
+  }
+  const actualizaValorVista = (e) => {
+    setValorVista(e.target.value);
+    //Lo dejaremos terminar el evento de cambio o change
+    setUpdateTrigger(Math.random());//experimento para actualizar el dom
   }
 
   const filtrar=(strBusca)=>{
@@ -363,8 +412,9 @@ export default function OCargaList() {
 
  return (
   <>
-    <div> 
-      <TextField fullWidth variant="outlined" color="warning"
+  <Grid container>
+    <Grid item xs={10}>
+      <TextField fullWidth variant="outlined" color="warning" size="small"
                                    label="FILTRAR"
                                    sx={{display:'block',
                                         margin:'.5rem 0'}}
@@ -381,10 +431,47 @@ export default function OCargaList() {
                                       style:{color:'white'} 
                                   }}
       />
+    </Grid>
+    <Grid item xs={0.9}>    
+      <Button variant='contained' 
+              color='success' 
+              sx={{display:'block',
+              margin:'.5rem 0'}}
+              onClick={ ()=>{
+                exportToExcel(registrosdet);
+                    }
+              }
+              >
+      EXCEL
+      </Button>
+    </Grid>
+    <Grid item xs={1.1}>    
+      <Button variant='contained' 
+              color='warning' 
+              sx={{display:'block',
+              margin:'.5rem 0'}}
+              >
+      PDF-Rep
+      </Button>
+    </Grid>
+  </Grid>
+
+    <div>
+    <ToggleButtonGroup
+      color="warning"
+      value={valorVista}
+      exclusive
+      onChange={actualizaValorVista}
+      aria-label="Platform"
+    >
+      <ToggleButton value="resumen">Resumen</ToggleButton>
+      <ToggleButton value="analisis">Analisis</ToggleButton>
+      <ToggleButton value="diario">Diario</ToggleButton>
+    </ToggleButtonGroup>      
     </div>
 
     <Datatable
-      title="Panel de Ordenes Carga"
+      title="Registro - Ordenes Carga"
       theme="solarized"
       columns={columnas}
       data={registrosdet}

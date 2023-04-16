@@ -6,12 +6,20 @@ import FindIcon from '@mui/icons-material/FindInPage';
 import axios from 'axios';
 import React from 'react';
 import InputAdornment from '@mui/material/InputAdornment';
-import Datatable, {createTheme} from 'react-data-table-component';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import ArrowDownward from '@mui/icons-material/ArrowDownward';
-import { orange } from '@mui/material/colors';
+
+import DeleteIcon from '@mui/icons-material/DeleteForeverRounded';
+import LocalShippingIcon from '@mui/icons-material/LocalShippingTwoTone';
+import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
+import BorderColorIcon from '@mui/icons-material/QrCodeRounded';
+import swal from 'sweetalert';
+
+import Datatable, {createTheme} from 'react-data-table-component';
 
 export default function OCargaFormDet() {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Seccion Modal
@@ -40,167 +48,297 @@ export default function OCargaFormDet() {
     },
   }, 'dark');
 
+  const [abierto,setAbierto] = useState(false);
+  const [numGuia,setNumGuia] = useState("");
+  const [ocargaDetModal,setocargaDetModal] = useState({
+    guia:'',
+    guia_traslado:'',
+    guia_sacos:'',
+    e_peso:'',
+    e_costo:'',
+    e_monto:''
+  })
+  
+  const [guiaSacos, setGuiaSacos] = useState('');
+  const [ePeso, setEPeso] = useState('');
+  const [eCosto, setECosto] = useState('');
+
+  const handleGuiaSacosChange = (event) => {
+    setGuiaSacos(event.target.value); //almacena valor ePeso para uso posterior
+    
+    //calcula peso sugerido
+    const peso =(ocargaDet.peso_ticket*event.target.value/ocargaDet.sacos_ticket).toFixed(3);
+    setEPeso(peso); //almacena valor ePeso para uso posterior
+
+    //calcula monto pago estibaje
+    const monto = (peso * eCosto).toFixed(2);
+    setocargaDetModal(prevState => ({ ...prevState, guia_sacos: event.target.value }));
+    setocargaDetModal(prevState => ({ ...prevState, e_peso: peso }));
+    setocargaDetModal(prevState => ({ ...prevState, e_monto: monto }));
+    
+    setocargaDet({...ocargaDet, [event.target.name+numGuia]: event.target.value});
+    //console.log(ocargaDetModal);
+  };
+
+  const handleEPesoChange = (event) => {
+    setEPeso(event.target.value); //almacena valor ePeso para uso posterior
+    const monto = (event.target.value * eCosto).toFixed(2);
+    setocargaDetModal(prevState => ({ ...prevState, e_peso: event.target.value }));
+    setocargaDetModal(prevState => ({ ...prevState, e_monto: monto }));
+    
+    setocargaDet({...ocargaDet, [event.target.name+numGuia]: event.target.value});
+    //console.log(ocargaDetModal);
+  };
+  
+  const handleECostoChange = (event) => {
+    setECosto(event.target.value);//almacena valor eCosto para uso posterior
+    const monto = (ePeso * event.target.value).toFixed(2);
+    console.log("Monto calculado: ",monto);
+    setocargaDetModal(prevState => ({ ...prevState, e_costo: event.target.value }));
+    setocargaDetModal(prevState => ({ ...prevState, e_monto: monto }));
+
+    setocargaDet({...ocargaDet, [event.target.name+numGuia]: event.target.value});
+    console.log(ocargaDetModal);
+  };
+
   const modalStyles={
-    position:'absolute',
-    top:'0%',
-    left:'0%',
-    background:'gray',
-    border:'2px solid #000',
-    padding:'16px 32px 24px',
+    //position:'absolute',
+    top:'50%',
+    left:'15%',
+    //background:'gray',
+    border:'0px solid #000',
+    padding:'0px 10px 24px',
     width:'100',
     minHeight: '50px'
     //transform:'translate(0%,0%)'
   }
-  const tablaStyles = {
-    rows: {
-        style: {
-            minHeight: '20px', // override the row height
-        },
-    },
-    headCells: {
-        style: {
-            paddingLeft: '8px', // override the cell padding for head cells
-            paddingRight: '8px',
-        },
-    },
-    cells: {
-        style: {
-            paddingLeft: '8px', // override the cell padding for data cells
-            paddingRight: '8px',
-        },
-    },
-};  
-  const actualizaValorFiltro = e => {
-    //setValorBusqueda(e.target.value);
-    filtrar(e.target.value);
+  const abrirCerrarModal = ()=>{
+    setAbierto(!abierto);
   }
-  const filtrar=(strBusca)=>{
-      var resultadosBusqueda = [];
-      
-      resultadosBusqueda = tabladet.filter((elemento) => {
-        if (elemento.ref_razon_social.toString().toLowerCase().includes(strBusca.toLowerCase())
-      //   || elemento.pedido.toString().toLowerCase().includes(strBusca.toLowerCase())
-         || elemento.nombre.toString().toLowerCase().includes(strBusca.toLowerCase())
-          ){
-              return elemento;
-          }
-      });
-      setRegistrosdet(resultadosBusqueda);
-  }
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [toggleCleared, setToggleCleared] = useState(false);
-  const [registrosdet,setRegistrosdet] = useState([]); //Para vista principal
-  const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado
-  const columnas = [
-    { name:'AÑO', 
-      selector:row => row.pedido,
-      sortable: true
-    },
-    { name:'PEDIDO', 
-      selector:row => row.pedido,
-      sortable: true
-    },
-    { name:'DOC.IDENT', 
-      selector:row => row.ref_documento_id,
-      sortable: true
-    },
-    { name:'CLIENTE', 
-      selector:row => row.ref_razon_social,
-      sortable: true
-    },
-    { name:'IDPRODUCTO', 
-      selector:row => row.id_producto,
-      sortable: true
-    },
-    { name:'PRODUCTO', 
-      selector:row => row.nombre,
-      sortable: true
-    },
-    { name:'CANTIDAD', 
-      selector:row => row.cantidad,
-      sortable: true,
-      key:true
-    },
-    { name:'PLACA VACIO', 
-      selector:row => row.tr_placa,
-      sortable: true,
-      key:true
-    },
-    { name:'IDZONA', 
-      selector:row => row.id_zona_entrega,
-      sortable: true
-    },
-    { name:'ENTREGA', 
-      selector:row => row.zona_entrega,
-      sortable: true
-    },
-    { name:'FECHA', 
-      selector:row => row.fecha,
-      sortable: true,
-      key:true
-    },
-    { name:'OPERACION', 
-      selector:row => row.operacion,
-      sortable: true,
-      key:true
-    },
-    { name:'PLACA CARGADO', 
-      selector:row => row.tr_placacargado,
-      sortable: true,
-      key:true
-    }
-  ];
+  const actualizaDatosGuia = e => {
+    //actualizamos datos del modal, para pantallita
+    setocargaDetModal({...ocargaDetModal, [e.target.name]: e.target.value.toUpperCase()});
 
-  const handleRowSelected = useCallback(state => {
-		setSelectedRows(state.selectedRows);
-	}, []);
+    //ACTUALIZAMOS CAMPO ocargaDet.e_monto del modal
+    /*if ([e.target.name]=="e_costo"){
+      setocargaDetModal({...ocargaDetModal, e_costo: e.target.value});
+      setocargaDetModal({...ocargaDetModal, e_monto: ocargaDetModal.e_peso*(e.target.value)});
+      //setVarCosto(e.target.value); //almacenamos copia
+    }else{
+      if ([e.target.name]=="e_peso"){
+        //actualizamos valor e_peso
+        console.log([e.target.name], e.target.value);
+        setocargaDetModal({...ocargaDetModal, e_peso: e.target.value});
+        //actualizamos valor e_monto, pero con valor actual(peso rico target) * valor ant(e_costo)
+        console.log(ocargaDetModal);
+        setocargaDetModal({...ocargaDetModal, e_monto: e.target.value*ocargaDetModal.e_costo});
+      }
+    }*/
+
+    //actualizamos datos del formulario, para pantalla general
+    setocargaDet({...ocargaDet, [e.target.name+numGuia]: e.target.value.toUpperCase()});
+  }
+
+  const cargaArregloPopUp = async () => {
+    let strFecha="";
+    //La data, corresponde al mes de login
+    
+  }
   
-  const contextActions = useMemo(() => {
-    //console.log("asaaa");
-		const handleSeleccionado = () => {
-			var strPedido;
-      var strIdProducto;
-      var strProducto;
-      var strIdZonaEntrega;
-      var strZonaEntrega;
-      var strDocumentoId;
-      var strRazonSocial;
-      //var strMonto;
+  ///Body para Modal de Busqueda Incremental de Pedidos
+  const body=(
+    <div>
+      <Card sx={{mt:-8}}
+            style={{background:'#1e272e',padding:'0rem'}}
+      >
+          <CardContent >
+              <Typography color='white' fontSize={15} marginTop="0rem" >
+                    DATOS GUIA {numGuia}
+              </Typography>
 
-      strPedido = selectedRows.map(r => r.pedido);
-      strIdProducto = selectedRows.map(r => r.id_producto);
-      strProducto = selectedRows.map(r => r.nombre);
-      strIdZonaEntrega = selectedRows.map(r => r.id_zona_entrega);
-      strZonaEntrega = selectedRows.map(r => r.zona_entrega);
-      strDocumentoId = selectedRows.map(r => r.ref_documento_id);
-      strRazonSocial = selectedRows.map(r => r.ref_razon_social);
+            <div> 
+              <TextField variant="outlined" color="warning"
+                        autofocus
+                        sx={{display:'block',
+                              margin:'.5rem 0'}}
+                        name="guia"
+                        size='small'
+                        label='GUIA'
+                        value={ocargaDetModal.guia}
+                        onChange={actualizaDatosGuia}
+                        inputProps={{ style:{color:'white'} }}
+                        InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FindIcon />
+                              </InputAdornment>
+                            ),
+                            style:{color:'white'} 
+                        }}
+              />
+            </div>
+            <div> 
+              <TextField variant="outlined" color="warning"
+                        //autofocus
+                        sx={{display:'block',
+                              margin:'.5rem 0'}}
+                        size='small'
+                        name="guia_traslado"
+                        value={ocargaDetModal.guia_traslado}
+                        label='GUIA TRASL'
+                        onChange={actualizaDatosGuia}
+                        inputProps={{ style:{color:'white'} }}
+                        InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FindIcon />
+                              </InputAdornment>
+                            ),
+                            style:{color:'white'} 
+                        }}
+              />
+            </div>
+            <div> 
+              <TextField variant="outlined" color="warning"
+                        //autofocus
+                        sx={{display:'block',
+                              margin:'.5rem 0'}}
+                        size='small'
+                        name="guia_sacos"
+                        value={guiaSacos || ocargaDetModal.guia_sacos}
+                        label='SACOS'
+                        onChange={handleGuiaSacosChange}
+                        inputProps={{ style:{color:'white'} }}
+                        InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FindIcon />
+                              </InputAdornment>
+                            ),
+                            style:{color:'white'} 
+                        }}
+              />
+            </div>
+            <div> 
+              <TextField variant="outlined" color="warning"
+                        //autofocus
+                        sx={{display:'block',
+                              margin:'.5rem 0'}}
+                        size='small'
+                        name="e_peso"
+                        //value={ePeso || (ocargaDet.peso_ticket-ocargaDet.e_peso01-ocargaDet.e_peso02-ocargaDet.e_peso03)} 
+                        value={ePeso || ocargaDetModal.e_peso} 
+                        label='PESO TN.'
+                        onChange={handleEPesoChange}
+                        inputProps={{ style:{color:'white'} }}
+                        InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FindIcon />
+                              </InputAdornment>
+                            ),
+                            style:{color:'white'} 
+                        }}
+              />
+            </div>
 
-      //console.log(strPedido[0]);
-      //ojo: cuando llega la variable ,desde un filtro en automatico, llega como array unitario, pero array
-      //y si lo enviamos al backend en ese formato, las funciones de tratamiento de texto no funcionaran, danger
-      ocargaDet.pedido = strPedido[0];
-      ocargaDet.id_producto = strIdProducto[0];
-      ocargaDet.descripcion = strProducto[0];
-      ocargaDet.id_zona_entrega = strIdZonaEntrega[0];
-      ocargaDet.zona_entrega = strZonaEntrega[0];
-      ocargaDet.ref_documento_id = strDocumentoId[0];
-      ocargaDet.ref_razon_social= strRazonSocial[0];
+            <div> 
+              <TextField variant="outlined" color="warning"
+                        //autofocus
+                        sx={{display:'block',
+                              margin:'.5rem 0'}}
+                        size='small'
+                        name="e_costo"
+                        value={eCosto}
+                        label='COSTO S/'
+                        onChange={handleECostoChange}
+                        inputProps={{ style:{color:'white'} }}
+                        InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FindIcon />
+                              </InputAdornment>
+                            ),
+                            style:{color:'white'} 
+                        }}
+              />
+            </div>
 
-      setToggleCleared(!toggleCleared);
-      //Cerrar Modal
-		};
+            <div> 
+              <TextField variant="outlined" color="warning"
+                        //autofocus
+                        sx={{display:'block',
+                              margin:'.5rem 0'}}
+                        size='small'
+                        name="e_monto"
+                        value={ocargaDetModal.e_monto}
+                        label='PAGO S/'
+                        onChange={actualizaDatosGuia}
+                        inputProps={{ style:{color:'white'} }}
+                        InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FindIcon />
+                              </InputAdornment>
+                            ),
+                            style:{color:'white'} 
+                        }}
+              />
+            </div>
 
+            <div>
+                <Button variant='contained'  color="primary"
+                  onClick = { () => {
+                    setAbierto(false);
+                    //actualizar las variables, porque sino hay change, no pasaran
+                    if (numGuia=="01") {
+                      ocargaDet.guia01 = ocargaDetModal.guia;
+                      ocargaDet.guia_traslado01 = ocargaDetModal.guia_traslado;
+                      console.log("ocargaDetModal.guia_sacos : ",ocargaDetModal.guia_sacos);
+                      ocargaDet.guia_sacos01 = ocargaDetModal.guia_sacos;
+                      ocargaDet.e_peso01 = ocargaDetModal.e_peso;
+                      ocargaDet.e_monto01 = ocargaDetModal.e_monto;
+                    }
+                    if (numGuia=="02") {
+                      ocargaDet.guia02 = ocargaDetModal.guia;
+                      ocargaDet.guia_traslado02 = ocargaDetModal.guia_traslado;
+                      ocargaDet.guia_sacos02 = ocargaDetModal.guia_sacos;
+                      ocargaDet.e_peso02 = ocargaDetModal.e_peso;
+                      ocargaDet.e_monto02 = ocargaDetModal.e_monto;
+                    }
+                    if (numGuia=="03") {
+                      ocargaDet.guia03 = ocargaDetModal.guia;
+                      ocargaDet.guia_traslado03 = ocargaDetModal.guia_traslado;
+                      ocargaDet.guia_sacos03 = ocargaDetModal.guia_sacos;
+                      ocargaDet.e_peso03 = ocargaDetModal.e_peso;
+                      ocargaDet.e_monto03 = ocargaDetModal.e_monto;
+                    }
 
-		return (
-      <>
-			<Button key="seleccionado" onClick={handleSeleccionado} >
-       ACEPTAR <EditRoundedIcon/>
-			</Button>
-			
-      </>
-		);
-	}, [registrosdet, selectedRows, toggleCleared]);
+                    console.log(ocargaDetModal);
+                    console.log(ocargaDet);
+                    }
+                  }
+                >Aceptar
+                </Button>
+                <Button variant='contained' color="warning"
+                  onClick = { () => {
+                    setAbierto(false);
+                    }
+                  }
+                >Cancela
+                </Button>
+            </div>
+          </CardContent>
+      </Card>
 
+    </div>
+  )
+
+  //Fin Seccion Modal
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  
   const buscaDatosOC = async () => {
     let strFecha="";
     //La data, corresponde al mes de login
@@ -215,10 +353,9 @@ export default function OCargaFormDet() {
       strFecha = strFecha.substr(0,nPos);
     }
 
-    //const res = await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}/${item}`);
+    //const res = await fetch(`${back_host}/ocargadet/${ano}/${numero}/${item}`);
     //const data = await res.json();
     //setRegistrosdet(data);
-    //setTabladet(data); //Copia para tratamiento de filtrado
   }
 
   //Fin Seccion Modal
@@ -227,28 +364,8 @@ export default function OCargaFormDet() {
 
   //experimento
   const [updateTrigger, setUpdateTrigger] = useState({});
-  const [razonSocialBusca, setRazonSocialBusca] = useState("");
-    //funcion para mostrar data de formulario, modo edicion
-  const mostrarRazonSocialBusca = async (documento_id) => {
-      const res = await fetch(`https://apiperu.dev/api/ruc/${documento_id}`, {
-        method: "GET",
-        headers: {"Content-Type":"application/json",
-                  "Authorization": "Bearer " + "f03875f81da6f2c2f2e29f48fdf798f15b7a2811893ad61a1e97934a665acc8b"
-                  }
-      });
-
-      const datosjson = await res.json();
-      //console.log(datosjson);
-      //console.log(datosjson.data.nombre_o_razon_social);
-      setRazonSocialBusca(datosjson.data.nombre_o_razon_social);
-      ocargaDet.ref_razon_social = datosjson.data.nombre_o_razon_social;
-  };
+  //funcion para mostrar data de formulario, modo edicion
   
-  /*let txtRazonSocialRef = useRef();
-  function razonSocialFocus(){
-    const input =  txtRazonSocialRef.current;
-    input.focus();
-  }*/
   ////////////////////////////////////////////////////////////////////////////////////////
   //Select(Combos) para llenar, desde tabla
   const [zonaentrega_select,setZonaEntregaSelect] = useState([]);
@@ -282,18 +399,60 @@ export default function OCargaFormDet() {
       operacion:'',     //ocarga-fase01
       tr_placa:'',      //ventas
       tr_placacargado:'', //ocarga-fase01
-
       id_zona_entrega:'', //ventas referencial, no visible
       zona_entrega:'',    //ventas referencial, no visible
-
       sacos_real:'',
       lote_procedencia:'',
       lote_asignado:'',
       e_estibadores:'',
       e_hora_ini:'',
       e_hora_fin:'',
-      e_observacion:''
+      e_observacion:'',
+
+      ticket:'',
+      peso_ticket:'',
+      sacos_ticket:'',
+
+      guia01:'',
+      guia_traslado01:'',
+      guia_sacos01:'',
+      e_peso01:'',
+      e_monto01:'',
+
+      guia02:'',
+      guia_traslado02:'',
+      guia_sacos02:'',
+      e_peso02:'',
+      e_monto02:'',
+
+      guia03:'',
+      guia_traslado03:'',
+      guia_sacos03:'',
+      e_peso03:'',
+      e_monto03:''
   })
+
+  const confirmaEliminacionDet = (cod,serie,num,elem,item)=>{
+    swal({
+      title:"Eliminar Detalle de Venta",
+      text:"Seguro ?",
+      icon:"warning",
+      timer:"3000",
+      buttons:["No","Si"]
+    }).then(respuesta=>{
+        if (respuesta){
+          eliminarVentaDetalleItem(cod,serie,num,elem,item);
+            swal({
+            text:"Detalle de venta eliminado con exito",
+            icon:"success",
+            timer:"2000"
+          });
+      }
+    })
+  }
+  const eliminarVentaDetalleItem = async (cod,serie,num,elem,item) => {
+    //console.log(data);
+  }
 
   const handleSubmit = async(e) => {
     e.preventDefault();
@@ -302,7 +461,8 @@ export default function OCargaFormDet() {
     //Cambiooo para controlar Edicion
     if (editando){
       console.log("actualizando");
-      await fetch(`http://localhost:4000/ocargadet03/${params.ano}/${params.numero}/${params.item}`, {
+      console.log(ocargaDet);
+      await fetch(`${back_host}/ocargadet03/${params.ano}/${params.numero}/${params.item}`, {
         method: "PUT",
         body: JSON.stringify(ocargaDet),
         headers: {"Content-Type":"application/json"}
@@ -313,8 +473,9 @@ export default function OCargaFormDet() {
     
     setEditando(true);
     setUpdateTrigger(Math.random());//experimento
-    navigate(`/ocargadet/${params.fecha_proceso}`);
-    
+    //navigate(`/ocargadet/${params.fecha_proceso}`);
+    window.history.back();
+
     //console.log(zona);
   };
   
@@ -323,30 +484,24 @@ export default function OCargaFormDet() {
     if (params.ano){
       mostrarOCarga(params.ano,params.numero,params.item);
     }  
-    
-    //console.log(fecha_actual);
+
+    //const peso = Number(ocargaDetModal.e_peso);
+    //const monto = peso * ocargaDetModal.e_costo;
+    //setocargaDetModal(prevState => ({ ...prevState, e_monto: monto }));
+
+    //console.log(ocargaDetModal.e_peso);
   },[params.ano, updateTrigger]);
 
   //Rico evento change
   const handleChange = e => {
-    
-    var index;
-    var sTexto;
-    if (e.target.name === "id_zona_entrega") {
-      const arrayCopia = zonaentrega_select.slice();
-      index = arrayCopia.map(elemento => elemento.id_zonadet).indexOf(e.target.value);
-      sTexto = arrayCopia[index].nombre;
-      setocargaDet({...ocargaDet, [e.target.name]: e.target.value, zona_entrega:sTexto});
-      return;
-    }
-
     //Para todos los demas casos ;)
+    //console.log("handleChange chino: ",[e.target.name], e.target.value.toUpperCase());
     setocargaDet({...ocargaDet, [e.target.name]: e.target.value.toUpperCase()});
   }
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarOCarga = async (ano,numero,item) => {
-    const res = await fetch(`http://localhost:4000/ocargadet/${ano}/${numero}/${item}`);
+    const res = await fetch(`${back_host}/ocargadet/${ano}/${numero}/${item}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
     setocargaDet({  
@@ -371,6 +526,7 @@ export default function OCargaFormDet() {
                 id_producto:data.id_producto,
                 descripcion:data.descripcion,
                 cantidad:data.cantidad, //new
+                unidad_medida:data.unidad_medida, //new
                 operacion:data.operacion,
                 tr_placa:data.tr_placa, ///new
                 tr_placacargado:data.tr_placacargado, ///new
@@ -383,70 +539,331 @@ export default function OCargaFormDet() {
                 e_estibadores:data.e_estibadores,
                 e_hora_ini:data.e_hora_ini,
                 e_hora_fin:data.e_hora_fin,
-                e_observacion:data.e_observacion
+                e_observacion:data.e_observacion,
+
+                ticket:data.ticket,
+                peso_ticket:data.peso_ticket,
+                sacos_ticket:data.sacos_ticket,
+                
+                guia01:data.guia01,
+                guia_traslado01:data.guia_traslado01,
+                guia_sacos01:data.guia_sacos01,
+                e_peso01:data.e_peso01,
+                e_monto01:data.e_monto01,
+
+                guia02:data.guia02,
+                guia_traslado02:data.guia_traslado02,
+                guia_sacos02:data.guia_sacos02,
+                e_peso02:data.e_peso02,
+                e_monto02:data.e_monto02,
+
+                guia03:data.guia03,
+                guia_traslado03:data.guia_traslado03,
+                guia_sacos03:data.guia_sacos03,
+                e_peso03:data.e_peso03,
+                e_monto03:data.e_monto03
+
                 });
     //console.log(data);
     //console.log(params.modo);
+    //primera sugerencia de cantidad guia
+
     setEditando(true);
   };
+
+  const body01=(
+    <Card sx={{mt:0.1}}
+          style={{
+            background:'#1e272e',
+            padding:'1rem',
+            height:'3rem',
+            marginTop:".2rem"
+          }}
+          //key={ocargaDet.ref_documento_id}
+    >
+      <CardContent style={{color:'white'}}>
+        <Grid container spacing={3}
+              direction="column"
+              //alignItems="center"
+              sx={{ justifyContent: 'flex-start' }}
+        >
+            <Grid container spacing={0}
+              alignItems="center"
+            > 
+                <Grid item xs={12} sm={6}>
+                  <IconButton color="primary" aria-label="upload picture" component="label" size="small"
+                              sx={{ textAlign: 'left' }}
+                              onClick = { () => {
+                                setNumGuia("01");
+                                //Arreglar la sugerencia de sacos con referencia a ocargaDet.sacos_real
+                                ocargaDetModal.guia = ocargaDet.guia01;
+                                ocargaDetModal.guia_traslado = ocargaDet.guia_traslado01;
+
+                                if (ocargaDet.guia_sacos01==null || ocargaDet.guia_sacos01==0){
+                                  ocargaDetModal.guia_sacos = ocargaDet.sacos_real-ocargaDet.guia_sacos02-ocargaDet.guia_sacos03;
+                                }else{
+                                  ocargaDetModal.guia_sacos = ocargaDet.guia_sacos01;
+                                }
+                                setGuiaSacos(ocargaDetModal.guia_sacos);
+
+                                if (ocargaDet.e_peso01==null || ocargaDet.e_peso01==0){
+                                  ocargaDetModal.e_peso = ((ocargaDet.peso_ticket-ocargaDet.e_peso02-ocargaDet.e_peso03)*ocargaDet.sacos_real/ocargaDet.sacos_ticket).toFixed(3);    
+                                }else{
+                                  ocargaDetModal.e_peso = ocargaDet.e_peso01;
+                                }
+                                setEPeso(ocargaDetModal.e_peso);
+
+                                ocargaDetModal.e_monto = ocargaDet.e_monto01;
+                                cargaArregloPopUp();//Info del modal
+                                setAbierto(true);
+                                }
+                              }
+                  >
+                  <EditRoundedIcon />
+                  </IconButton>
+
+                  <IconButton color="warning" aria-label="upload picture" component="label" size="small"
+                              sx={{ textAlign: 'left' }}
+                              onClick = { () => {
+                                setNumGuia("01");
+                                ocargaDetModal.guia = "";
+                                ocargaDetModal.guia_traslado = "";
+                                ocargaDetModal.guia_sacos = 0;
+                                ocargaDetModal.e_peso = 0;
+                                //ocargaDetModal.e_monto = 0;
+
+                                ocargaDet.guia01="";
+                                ocargaDet.guia_traslado01="";
+                                ocargaDet.guia_sacos01=0;
+                                ocargaDet.e_peso01=0;
+                                ocargaDet.e_monto01=0;
+                                setocargaDet({...ocargaDet, guia01: ""});
+                                }
+                              }
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Grid>
+              
+                <Grid item xs={12} sm={6}>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    GR: {ocargaDet.guia01} 
+                  </Typography>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    TN: {ocargaDet.e_peso01}
+                  </Typography>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    S/. {ocargaDet.e_monto01}
+                  </Typography>
+
+                </Grid>
+            </Grid>
+        </Grid>
+
+    </CardContent>
+  </Card>
+  );
+
+  const body02=(
+    <Card sx={{mt:0.1}}
+          style={{
+            background:'#1e272e',
+            padding:'1rem',
+            height:'3rem',
+            marginTop:".2rem"
+          }}
+          //key={ocargaDet.ref_documento_id}
+    >
+      <CardContent style={{color:'white'}}>
+        <Grid container spacing={3}
+              direction="column"
+              //alignItems="center"
+              sx={{ justifyContent: 'flex-start' }}
+        >
+            <Grid container spacing={0}
+              alignItems="center"
+            > 
+                <Grid item xs={12} sm={6}>
+                  <IconButton color="primary" aria-label="upload picture" component="label" size="small"
+                              sx={{ textAlign: 'left' }}
+                              onClick = { () => {
+                                setNumGuia("02");
+                                ocargaDetModal.guia = ocargaDet.guia02;
+                                ocargaDetModal.guia_traslado = ocargaDet.guia_traslado02;
+                                
+                                //ocargaDetModal.guia_sacos = ocargaDet.guia_sacos02;
+                                //ocargaDetModal.e_peso = ocargaDet.e_peso02;
+                                if (ocargaDet.guia_sacos02==null || ocargaDet.guia_sacos02==0){
+                                  ocargaDetModal.guia_sacos = ocargaDet.sacos_real-ocargaDet.guia_sacos01-ocargaDet.guia_sacos03;
+                                }else{
+                                  ocargaDetModal.guia_sacos = ocargaDet.guia_sacos02;
+                                }
+                                setGuiaSacos(ocargaDetModal.guia_sacos);
+
+                                if (ocargaDet.e_peso02==null || ocargaDet.e_peso02==0){
+                                  ocargaDetModal.e_peso = (ocargaDet.peso_ticket-ocargaDet.e_peso01-ocargaDet.e_peso03).toFixed(3);    
+                                }else{
+                                  ocargaDetModal.e_peso = ocargaDet.e_peso02;
+                                }
+                                setEPeso(ocargaDetModal.e_peso);
+
+                                ocargaDetModal.e_monto = ocargaDet.e_monto02;
+                                cargaArregloPopUp();//Info del modal
+                                setAbierto(true);
+                                }
+                              }
+                  >
+                  <EditRoundedIcon />
+                  </IconButton>
+
+                  <IconButton color="warning" aria-label="upload picture" component="label" size="small"
+                              sx={{ textAlign: 'left' }}
+                              onClick = { () => {
+                                setNumGuia("02");
+                                ocargaDetModal.guia = "";
+                                ocargaDetModal.guia_traslado = "";
+                                ocargaDetModal.guia_sacos = 0;
+                                ocargaDetModal.e_peso = 0;
+                                //ocargaDetModal.e_monto = 0;
+
+                                ocargaDet.guia02="";
+                                ocargaDet.guia_traslado02="";
+                                ocargaDet.guia_sacos02=0;
+                                ocargaDet.e_peso02=0;
+                                ocargaDet.e_monto02=0;
+                                setocargaDet({...ocargaDet, guia02: ""});
+                                }
+                              }
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Grid>
+              
+                <Grid item xs={12} sm={6}>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    GR: {ocargaDet.guia02} 
+                  </Typography>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    TN: {ocargaDet.e_peso02}
+                  </Typography>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    S/. {ocargaDet.e_monto02}
+                  </Typography>
+                </Grid>
+            </Grid>
+        </Grid>
+
+    </CardContent>
+  </Card>
+  );
   
-  ///Body para Modal de Busqueda Incremental de Pedidos
-  const body=(
-    <div>
-        <div> 
-          <TextField fullWidth variant="outlined" color="warning"
-                    autofocus
-                    label="FILTRAR"
-                    sx={{display:'block',
-                          margin:'.5rem 0'}}
-                    name="busqueda"
-                    placeholder='Cliente   Producto'
-                    onChange={actualizaValorFiltro}
-                    inputProps={{ style:{color:'white'} }}
-                    InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <FindIcon />
-                          </InputAdornment>
-                        ),
-                        style:{color:'white'} 
-                    }}
-          />
-        </div>
-        
-        <Datatable
-          title="Pedidos Pendientes"
-          theme="solarized"
-          columns={columnas}
-          data={registrosdet}
-          selectableRows
-          contextActions={contextActions}
-          //actions={actions}
-          onSelectedRowsChange={handleRowSelected}
-          clearSelectedRows={toggleCleared}
 
-          selectableRowsComponent={Checkbox} // Pass the function only
-          sortIcon={<ArrowDownward />}  
-          customStyles={tablaStyles}
-          >
-        </Datatable>
-        <br />
+  const body03=(
+    <Card sx={{mt:0.1}}
+          style={{
+            background:'#1e272e',
+            padding:'1rem',
+            height:'3rem',
+            marginTop:".2rem"
+          }}
+          //key={ocargaDet.ref_documento_id}
+    >
+      <CardContent style={{color:'white'}}>
+        <Grid container spacing={3}
+              direction="column"
+              //alignItems="center"
+              sx={{ justifyContent: 'flex-start' }}
+        >
+            <Grid container spacing={0}
+              alignItems="center"
+            > 
+                <Grid item xs={12} sm={6}>
+                  <IconButton color="primary" aria-label="upload picture" component="label" size="small"
+                              sx={{ textAlign: 'left' }}
+                              onClick = { () => {
+                                setNumGuia("03");
+                                ocargaDetModal.guia = ocargaDet.guia03
+                                ocargaDetModal.guia_traslado = ocargaDet.guia_traslado03
+                                
+                                //ocargaDetModal.guia_sacos = ocargaDet.guia_sacos03
+                                //ocargaDetModal.e_peso = ocargaDet.e_peso03
+                                if (ocargaDet.guia_sacos03==null){
+                                  ocargaDetModal.guia_sacos = ocargaDet.sacos_real-ocargaDet.guia_sacos01-ocargaDet.guia_sacos02;
+                                }else{
+                                  ocargaDetModal.guia_sacos = ocargaDet.guia_sacos03;
+                                }
+                                setGuiaSacos(ocargaDetModal.guia_sacos);
 
-        <div>
-            <Button color="warning"
-              onClick = { () => {
-                //setAbierto(false);
-                }
-              }
-            >Cerrar
-            </Button>
-        </div>
-    </div>
-  )
+                                if (ocargaDet.e_peso03==null){
+                                  ocargaDetModal.e_peso = ocargaDet.peso_ticket-ocargaDet.e_peso01-ocargaDet.e_peso02;    
+                                }else{
+                                  ocargaDetModal.e_peso = ocargaDet.e_peso03;
+                                }
+                                setEPeso(ocargaDetModal.e_peso);
 
+                                ocargaDetModal.e_monto = ocargaDet.e_monto03
+                                cargaArregloPopUp();//Info del modal
+                                setAbierto(true);
+                                }
+                              }
+                  >
+                  <EditRoundedIcon />
+                  </IconButton>
+
+                  <IconButton color="warning" aria-label="upload picture" component="label" size="small"
+                              sx={{ textAlign: 'left' }}
+                              onClick = { () => {
+                                setNumGuia("03");
+                                ocargaDetModal.guia = "";
+                                ocargaDetModal.guia_traslado = "";
+                                ocargaDetModal.guia_sacos = 0;
+                                ocargaDetModal.e_peso = 0;
+                                //ocargaDetModal.e_monto = 0;
+
+                                ocargaDet.guia03="";
+                                ocargaDet.guia_traslado03="";
+                                ocargaDet.guia_sacos03=0;
+                                ocargaDet.e_peso03=0;
+                                ocargaDet.e_monto03=0;
+                                setocargaDet({...ocargaDet, guia03: ""});
+                                }
+                              }
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Grid>
+              
+                <Grid item xs={12} sm={6}>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    GR: {ocargaDet.guia03} 
+                  </Typography>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    TN: {ocargaDet.e_peso03}
+                  </Typography>
+                  <Typography fontSize={15} marginTop="0rem" >
+                    S/. {ocargaDet.e_monto03}
+                  </Typography>
+                </Grid>
+            </Grid>
+        </Grid>
+
+    </CardContent>
+  </Card>
+  );
+  
   return (
     <> 
 <div class="p-3 mb-2 bg-dark text-white">
+
+<div>
+  <Modal
+    open={abierto}
+    onClose={abrirCerrarModal}
+    style={modalStyles}
+    >
+    {body}
+  </Modal>
+</div>
 
 <Grid container spacing={2}
           direction="column"
@@ -465,7 +882,7 @@ export default function OCargaFormDet() {
                   >
                 
                 <CardContent >
-                    <form onSubmit={handleSubmit} >
+                    <form onSubmit={handleSubmit} autoComplete="off">
 
                             <Grid container spacing={0.5}
                                       direction="column"
@@ -533,7 +950,7 @@ export default function OCargaFormDet() {
                                 style={{color:'#4F8FE1'}}
                                 sx={{mt:0}}
                                 >
-                                CANT. : {ocargaDet.cantidad}
+                                CANT. : {ocargaDet.cantidad} {ocargaDet.unidad_medida}
                                 </Typography>
                                 
                                 <Typography marginTop="0.5rem" variant="subtitle2" 
@@ -599,75 +1016,30 @@ export default function OCargaFormDet() {
                                 ESTIBADORES : {ocargaDet.e_estibadores}
                                 </Typography>
 
-                                <TextField variant="outlined" 
-                                    label="TICKET"
-                                    size="small"
-                                    sx={{mt:1}}
-                                    fullWidth
-                                    name="ticket"
-                                    value={ocargaDet.ticket}
-                                    onChange={handleChange}
-                                    inputProps={{ style:{color:'white', textAlign: 'center'} }}
-                                    InputLabelProps={{ style:{color:'white'} }}
-                                />
+                                <Typography marginTop="0.5rem" variant="h5" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                TICKET : {ocargaDet.ticket}
+                                </Typography>
 
-                                <TextField variant="outlined" 
-                                    label="PESO TICKET"
-                                    size="small"
-                                    sx={{mt:1}}
-                                    fullWidth
-                                    name="peso_ticket"
-                                    value={ocargaDet.peso_ticket}
-                                    onChange={handleChange}
-                                    inputProps={{ style:{color:'white', textAlign: 'center'} }}
-                                    InputLabelProps={{ style:{color:'white'} }}
-                                />
+                                <Typography marginTop="0.5rem" variant="h5" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                TN. TICKET : {ocargaDet.peso_ticket}
+                                </Typography>
 
-                                <TextField variant="outlined" 
-                                    label="GUIA VTA."
-                                    size="small"
-                                    sx={{mt:1}}
-                                    fullWidth
-                                    name="guia"
-                                    value={ocargaDet.guia}
-                                    onChange={handleChange}
-                                    inputProps={{ style:{color:'white', textAlign: 'center'} }}
-                                    InputLabelProps={{ style:{color:'white'} }}
-                                />
-                                <TextField variant="outlined" 
-                                    label="GUIA TRASLADO"
-                                    size="small"
-                                    sx={{mt:1}}
-                                    fullWidth
-                                    name="guia"
-                                    value={ocargaDet.guia_traslado}
-                                    onChange={handleChange}
-                                    inputProps={{ style:{color:'white', textAlign: 'center'} }}
-                                    InputLabelProps={{ style:{color:'white'} }}
-                                />
+                                <Typography marginTop="0.5rem" variant="h5" 
+                                style={{color:'#4F8FE1'}}
+                                sx={{mt:0}}
+                                >
+                                SACOS TICKET : {ocargaDet.sacos_ticket}
+                                </Typography>
 
-                                <TextField variant="outlined" 
-                                    label="PESO"
-                                    size="small"
-                                    sx={{mt:1}}
-                                    fullWidth
-                                    name="guia"
-                                    value={ocargaDet.e_peso}
-                                    onChange={handleChange}
-                                    inputProps={{ style:{color:'white', textAlign: 'center'} }}
-                                    InputLabelProps={{ style:{color:'white'} }}
-                                />
-                                <TextField variant="outlined" 
-                                    label="MONTO"
-                                    size="small"
-                                    sx={{mt:1}}
-                                    fullWidth
-                                    name="guia"
-                                    value={ocargaDet.e_monto}
-                                    onChange={handleChange}
-                                    inputProps={{ style:{color:'white', textAlign: 'center'} }}
-                                    InputLabelProps={{ style:{color:'white'} }}
-                                />
+                                {body01}
+                                {body02}
+                                {body03}
 
                                 <Button variant='contained' 
                                     color='primary' 
@@ -682,6 +1054,18 @@ export default function OCargaFormDet() {
                                     <CircularProgress color="inherit" size={24} />
                                     ) : ('GRABAR')
                                     }
+                                  </Button>
+
+                                  <Button variant='contained' 
+                                    color='success' 
+                                    sx={{mt:1}}
+                                    onClick={ ()=>{
+                                      navigate(-1, { replace: true });
+                                      //window.location.reload();
+                                      }
+                                    }
+                                    >
+                                    ANTERIOR
                                   </Button>
 
 

@@ -1,26 +1,142 @@
 import {Grid,Card,CardContent,Typography,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl, Switch, FormControlLabel, Checkbox} from '@mui/material'
-import { useState,useEffect,useCallback,useMemo } from 'react';
+import React, { useState,useEffect,useRef } from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import axios from 'axios';
 import AddBoxRoundedIcon from '@mui/icons-material/AddToQueue';
-import BorderColorIcon from '@mui/icons-material/EditRounded';
-import FindIcon from '@mui/icons-material/FindInPage';
+import BorderColorIcon from '@mui/icons-material/QrCodeRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
-import UpdateIcon from '@mui/icons-material/UpdateSharp';
 import IconButton from '@mui/material/IconButton';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-
-import DateFnsUtils from '@date-io/date-fns';
+import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
 import swal from 'sweetalert';
 
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import logo from '../alsa.png';
+
 export default function VentaForm() {
+  //const back_host = process.env.BACK_HOST || "http://localhost:4000";
+  const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   ////////////////////////////////////////////////////////////////////////////////////////
+  const createPdf = async () => {
+    const pdfDoc = await PDFDocument.create()
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Add logo to the top of the page
+    //const logoImage = pdfDoc.embedPng(logo);
+    const pngImage = await pdfDoc.embedPng(logo);
+    const pngDims = pngImage.scale(0.5)
+
+    page.drawImage(pngImage, {
+      //x: page.getWidth() / 2 - pngDims.width / 2 + 75,
+      //y: page.getHeight() / 2 - pngDims.height + 250,
+      x: 1,
+      y: 780,
+      width: pngDims.width,
+      height: pngDims.height,
+    })
+
+    const fontSize = 12;
+    const lineHeight = fontSize * 1.2;
+    const margin = 50;
+    const x = margin;
+    const y = height - margin - lineHeight - 10;
+
+    // Draw column headers
+    page.drawText('Nombre', { x, y, size: fontSize });
+    page.drawText('Zona', { x: x + 200, y, size: fontSize });
+
+    // Draw table data
+    let row = 1;
+    registrosdet.forEach((person) => {
+      const text = `${person.descripcion}`;
+      const textWidth = font.widthOfTextAtSize(text, fontSize);
+      const textHeight = font.heightAtSize(fontSize);
+      const textX = x;
+      const textY = y - lineHeight * row;
+
+      page.drawText(text, { x: textX, y: textY, size: fontSize, font });
+      page.drawLine({
+        start: { x: textX, y: textY - textHeight / 2 + 2},
+        end: { x: textX + 300, y: textY - textHeight / 2 + 2 },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+        opacity: 0.5
+      });
+
+      page.drawText(person.cantidad.toString(), { x: x + 200, y: textY, size: fontSize, font });
+      /*page.drawLine({
+        start: { x: x + 200, y: textY - textHeight / 2 },
+        end: { x: x + 200 + 50, y: textY - textHeight / 2 },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      });*/
+
+      row++;
+    });
+ 
+    // Draw table data
+    /*const table = {
+      headers: ["Nombre", "Zona"],
+      rows: zona_select.map((person) => [person.nombre, person.id_zona.toString()])
+    };
+    const tableWidth = (width - margin * 2) / table.headers.length;
+    const tableHeight = table.rows.length * lineHeight * 1.5;
+    const tableX = margin;
+    const tableY = height - margin - tableHeight;
+    
+    const drawTable = () => {
+      page.drawText(table.headers.join("                        "), {
+        x: tableX,
+        y: tableY + lineHeight,
+        font: helveticaFont,
+        size: fontSize,
+        color: rgb(0,0,0)
+      });
+      table.rows.forEach((row, i) => {
+        row.forEach((cell, j) => {
+          const cellX = tableX + tableWidth * j;
+          const cellY = tableY - (i + 1) * lineHeight * 1.5;
+          page.drawText(cell, {
+            x: cellX + fontSize / 3,
+            y: cellY + lineHeight / 2 - 5, //le quitamos 5 para hacerlo mas abajito ;)
+            font: helveticaFont,
+            size: fontSize,
+            color: rgb(0,0,0)
+          });
+          page.drawRectangle({
+            x: cellX,
+            y: cellY,
+            width: tableWidth,
+            height: lineHeight,
+            borderWidth: 1,
+            borderColor: rgb(0,0,0)
+          });
+        });
+      });
+    };
+    drawTable();*/
+    
+
+    const pdfBytes = await pdfDoc.saveAsBase64({ dataUri: true });
+
+    // Creamos un enlace para descargar el archivo
+    const link = document.createElement('a');
+    link.href = pdfBytes;
+    link.download = 'mi-documento.pdf';
+    link.target = '_blank'; // Abrir el PDF en una nueva pestaña
+    document.body.appendChild(link);
+
+    // Hacemos clic en el enlace para descargar el archivo
+    link.click();
+  }
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   //Select(Combos) para llenar, desde tabla
   const [operacion_select] = useState([
     {tipo_op:'VENTA'},
-    {tipo_op:'TRANSBORDO'}
+    {tipo_op:'TRASLADO'}
   ]);
 
   const [zona_select,setZonaSelect] = useState([]);
@@ -28,7 +144,19 @@ export default function VentaForm() {
   const [cliente_select,setClienteSelect] = useState([]);
 
   const [registrosdet,setRegistrosdet] = useState([]);
-  //const fecha_actual = new Date();
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().substr(0, 10));
+
+  var fecha_actual="";
+  const iniciaFechaActual = ()=>{
+    var strFecha=""
+    let nPos=0;
+    const fecha = new Date(); //ok fecha y hora actual
+    strFecha = fecha.toISOString(); //formato texto
+    nPos = strFecha.indexOf('T');
+    fecha_actual = strFecha.substr(0,nPos);
+    //console.log(fecha_actual);
+    setVenta(prevState => ({ ...prevState, comprobante_original_fecemi: fecha_actual }));
+  }
 
   const [venta,setVenta] = useState({
       id_empresa:'1',  
@@ -59,14 +187,15 @@ export default function VentaForm() {
 
     //Cambiooo para controlar Edicion
     if (editando){
-      await fetch(`http://localhost:4000/venta/${params.cod}/${params.serie}/${params.num}/${params.elem}`, {
+      await fetch(`${back_host}/venta/${params.cod}/${params.serie}/${params.num}/${params.elem}`, {
         method: "PUT",
         body: JSON.stringify(venta),
         headers: {"Content-Type":"application/json"}
       });
     }else{
-      //console.log(venta);
-      const res = await fetch("http://localhost:4000/venta", {
+      console.log(`${back_host}/venta`);
+      console.log(venta);
+      const res = await fetch(`${back_host}/venta`, {
         method: "POST",
         body: JSON.stringify(venta),
         headers: {"Content-Type":"application/json"}
@@ -86,7 +215,8 @@ export default function VentaForm() {
     if (params.cod){
       mostrarVenta(params.cod,params.serie,params.num,params.elem);
       mostrarVentaDetalle(params.cod,params.serie,params.num,params.elem);
-    }  
+    }
+    iniciaFechaActual();
     cargaZonaCombo();
     cargaVendedorCombo();
     cargaClienteCombo();
@@ -95,7 +225,7 @@ export default function VentaForm() {
 
   const cargaZonaCombo = () =>{
     axios
-    .get('http://localhost:4000/zona')
+    .get(`${back_host}/zona`)
     .then((response) => {
         setZonaSelect(response.data);
     })
@@ -105,7 +235,7 @@ export default function VentaForm() {
   }
   const cargaVendedorCombo = () =>{
     axios
-    .get('http://localhost:4000/usuario/vendedores')
+    .get(`${back_host}/usuario/vendedores`)
     .then((response) => {
         setVendedorSelect(response.data);
     })
@@ -115,7 +245,7 @@ export default function VentaForm() {
   }
   const cargaClienteCombo = () =>{
     axios
-    .get('http://localhost:4000/correntista')
+    .get(`${back_host}/correntista`)
     .then((response) => {
         setClienteSelect(response.data);
     })
@@ -155,7 +285,7 @@ export default function VentaForm() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarVenta = async (cod,serie,num,elem) => {
-    const res = await fetch(`http://localhost:4000/venta/${cod}/${serie}/${num}/${elem}`);
+    const res = await fetch(`${back_host}/venta/${cod}/${serie}/${num}/${elem}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
     setVenta({  
@@ -173,6 +303,7 @@ export default function VentaForm() {
                 comprobante_original_fecemi:data.comprobante_original_fecemi,
                 documento_id:data.documento_id, //cliente
                 razon_social:data.razon_social, //cliente
+                codigo:data.codigo, //cliente
                 debe:data.debe,
                 peso_total:data.peso_total,
                 registrado:data.registrado
@@ -182,14 +313,14 @@ export default function VentaForm() {
   };
   
   const mostrarVentaDetalle = async (cod,serie,num,elem) => {
-    const res = await fetch(`http://localhost:4000/ventadet/${cod}/${serie}/${num}/${elem}`);
+    const res = await fetch(`${back_host}/ventadet/${cod}/${serie}/${num}/${elem}`);
     const dataDet = await res.json();
     setRegistrosdet(dataDet);
     setEditando(true);
   };
 
   const eliminarVentaDetalleItem = async (cod,serie,num,elem,item) => {
-    await fetch(`http://localhost:4000/ventadet/${cod}/${serie}/${num}/${elem}/${item}`, {
+    await fetch(`${back_host}/ventadet/${cod}/${serie}/${num}/${elem}/${item}`, {
       method:"DELETE"
     });
     
@@ -245,7 +376,15 @@ export default function VentaForm() {
 
                   <Grid item xs={0.5}>
                     <IconButton color="primary" aria-label="upload picture" component="label" size="small"
-                                onClick = {()=> navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)}
+                                onClick = { ()=>{
+                                          if (venta.tipo_op=="TRASLADO"){
+                                            navigate(`/ventadettraslado/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)
+                                          }else{
+                                            navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)
+                                          }
+                                          //navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)
+                                         } 
+                                        }
                     >
                       <BorderColorIcon />
                     </IconButton>
@@ -258,7 +397,15 @@ export default function VentaForm() {
                       <LocalShippingIcon />
                     </IconButton>
                   </Grid>
-                  
+
+                  <Grid item xs={0.5}>
+                    <IconButton color="primary" aria-label="upload picture" component="label" size="small"
+                                onClick = {createPdf}
+                    >
+                      <PictureAsPdf />
+                    </IconButton>
+                  </Grid>
+
                   <Grid item xs={0.5}>
                     <IconButton color="warning" aria-label="upload picture" component="label" size="small"
                                 onClick = { () => confirmaEliminacionDet(indice.comprobante_original_codigo
@@ -303,7 +450,13 @@ export default function VentaForm() {
                       </Typography>
                   </Grid>
 
-                  <Grid item xs={1}>
+                  <Grid item xs={0.5}>
+                      <Typography fontSize={15} marginTop="0" >
+                        {indice.moneda}
+                      </Typography>
+                  </Grid>
+
+                  <Grid item xs={0.5}>
                       <Typography fontSize={15} marginTop="0" >
                         {indice.porc_igv}
                       </Typography>
@@ -315,9 +468,9 @@ export default function VentaForm() {
                       </Typography>
                   </Grid>
 
-                  <Grid item xs={2}>
+                  <Grid item xs={1}>
                       <Typography fontSize={15} marginTop="0" >
-                        {indice.ref_observacion}
+                        {indice.unidad_medida}
                       </Typography>
                   </Grid>
 
@@ -342,8 +495,8 @@ export default function VentaForm() {
                     padding:'1rem'
                   }}
                   >
-                <Typography variant='5' color='white' textAlign='center'>
-                    {editando ? "EDITAR VENTA" : "REGISTRAR VENTA"}
+                <Typography variant='h5' color='white' textAlign='center'>
+                    {editando ? ("Editar " + venta.tipo_op + " : " + params.cod+"-"+params.serie+"-"+params.num) : ("Registrar Venta")}
                 </Typography>
                 
                 <CardContent >
@@ -356,7 +509,8 @@ export default function VentaForm() {
                               <InputLabel id="demo-simple-select-label" 
                                                 inputProps={{ style:{color:'white'} }}
                                                 InputLabelProps={{ style:{color:'white'} }}
-                              >Operacion</InputLabel>
+                                                sx={{mt:1, color:'#5DADE2'}}
+                              >OPERACION [ SEL.]</InputLabel>
                               <Select
                                       labelId="operacion_select"
                                       id={venta.tipo_op}
@@ -385,7 +539,8 @@ export default function VentaForm() {
                                     <InputLabel id="demo-simple-select-label" 
                                                 inputProps={{ style:{color:'white'} }}
                                                 InputLabelProps={{ style:{color:'white'} }}
-                                    >Zona</InputLabel>
+                                                sx={{mt:1, color:'#5DADE2'}}
+                                    >ZONA [ SEL]</InputLabel>
                                     <Select
                                       labelId="zona_select"
                                       id={venta.id_zona_venta}
@@ -426,7 +581,7 @@ export default function VentaForm() {
                                     name="comprobante_original_fecemi"
                                     type="date"
                                     //format="yyyy/MM/dd"
-                                    value={venta.comprobante_original_fecemi}
+                                    value={venta.comprobante_original_fecemi} 
                                     onChange={handleChange}
                                     inputProps={{ style:{color:'white'} }}
                                     InputLabelProps={{ style:{color:'white'} }}
@@ -439,7 +594,8 @@ export default function VentaForm() {
                                     <InputLabel id="demo-simple-select-label" 
                                                 inputProps={{ style:{color:'white'} }}
                                                 InputLabelProps={{ style:{color:'white'} }}
-                                    >Vendedor</InputLabel>
+                                                sx={{mt:1, color:'#5DADE2'}}
+                                    >VENDEDOR [ SEL]</InputLabel>
                                     <Select
                                       labelId="vendedor_select"
                                       id={venta.id_vendedor}
@@ -469,7 +625,8 @@ export default function VentaForm() {
                                     <InputLabel id="demo-simple-select-label" 
                                                 inputProps={{ style:{color:'white'} }}
                                                 InputLabelProps={{ style:{color:'white'} }}
-                                    >Cliente</InputLabel>
+                                                sx={{mt:1, color:'#5DADE2'}}
+                                    >CLIENTE [ {venta.codigo} ]</InputLabel>
                                     <Select
                                       labelId="cliente_select"
                                       id={venta.documento_id}
@@ -529,7 +686,7 @@ export default function VentaForm() {
               marginTop:".2rem"
             }}
             //key={ registrosdet.length? registrosdet.ref_documento_id : '0'}
-            key={registrosdet.ref_documento_id}
+            key={registrosdet.item}
       >
           <CardContent style={{color:'#4264EE'}}>
 
@@ -538,8 +695,13 @@ export default function VentaForm() {
                   <Grid item xs={0.5}>
                     <IconButton color="primary" aria-label="upload picture" component="label" size="small"
                                 onClick = {()=> {
-                                  //console.log(`/ventadet/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
-                                  navigate(`/ventadet/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
+                                  if (venta.tipo_op=="TRASLADO"){
+                                    navigate(`/ventadettraslado/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
+                                  }else{
+                                    navigate(`/ventadet/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
+                                  }
+
+                                  //navigate(`/ventadet/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
                                                 }
                                 }
                     >
@@ -550,6 +712,12 @@ export default function VentaForm() {
                   
                   <Grid item xs={0.5}>
                     {registrosdet.length}
+                  </Grid>
+                  <Grid item xs={0.5}>
+                    
+                  </Grid>
+                  <Grid item xs={0.5}>
+                    
                   </Grid>
                   <Grid item xs={1.5}>
                     RUC
@@ -564,16 +732,19 @@ export default function VentaForm() {
                     PRODUCTO
                   </Grid>
                   <Grid item xs={1}>
-                    P.UNIT $
+                    P.UNIT
+                  </Grid>
+                  <Grid item xs={0.5}>
+                    DIV.
+                  </Grid>
+                  <Grid item xs={0.5}>
+                    %IGV
                   </Grid>
                   <Grid item xs={1}>
-                    % IGV
+                    CANT.
                   </Grid>
-                  <Grid item xs={1}>
-                    TN.
-                  </Grid>
-                  <Grid item xs={2}>
-                    OBSERVACIONES
+                  <Grid item xs={1.5}>
+                    UND.
                   </Grid>
               </Grid>
           </CardContent>
