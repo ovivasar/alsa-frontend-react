@@ -1,16 +1,14 @@
 import React from 'react';
-import { useEffect, useState, useMemo, differenceBy, useCallback } from "react"
-import { Button, Card, CardContent, Typography } from "@mui/material";
-import { useNavigate,useParams } from "react-router-dom";
+import { useEffect, useState, useMemo, useCallback } from "react"
+import { Button} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import FindIcon from '@mui/icons-material/FindInPage';
 import UpdateIcon from '@mui/icons-material/UpdateSharp';
-import SendIcon from '@mui/icons-material/Send';
 import Add from '@mui/icons-material/Add';
 
 import IconButton from '@mui/material/IconButton';
 import swal from 'sweetalert';
-import axios from 'axios';
 import Datatable, {createTheme} from 'react-data-table-component';
 import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
@@ -157,7 +155,7 @@ export default function ProductoList() {
  
   const navigate = useNavigate();
   //Para recibir parametros desde afuera
-  const params = useParams();
+  //const params = useParams();
 
   const eliminarRegistroDet = async (id_registro) => {
     await fetch(`${back_host}/zonadet/${id_registro}`, {

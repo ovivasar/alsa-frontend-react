@@ -1,6 +1,6 @@
 import React from 'react';
-import { useEffect, useState, useMemo, differenceBy, useCallback } from "react"
-import { Button, Card, CardContent, Typography } from "@mui/material";
+import { useEffect, useState, useMemo, useCallback } from "react"
+import { Button } from "@mui/material";
 import { useNavigate,useParams } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import FindIcon from '@mui/icons-material/FindInPage';
@@ -155,7 +155,7 @@ export default function ZonaList() {
  
   const navigate = useNavigate();
   //Para recibir parametros desde afuera
-  const params = useParams();
+  //const params = useParams();
 
   const eliminarRegistroDet = async (id_registro) => {
     await fetch(`${back_host}/zona/${id_registro}`, {

@@ -1,4 +1,4 @@
-import {Grid,Card,CardContent,Typography,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl} from '@mui/material'
+import {Grid,Card,CardContent,Typography,TextField,Button,CircularProgress} from '@mui/material'
 //import { padding } from '@mui/system'
 import {useState,useEffect,useRef} from 'react';
 import React from 'react';
@@ -10,7 +10,6 @@ export default function ZonaDetForm() {
   //Orden directa
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
-  const [zonas_select,setZonaSelect] = useState([]);
   
   const [zonadet,setZonaDet] = useState({
       id_zonadet:'',

@@ -1,7 +1,6 @@
-import {Grid,Card,CardContent,Typography,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl, Switch, FormControlLabel, Checkbox} from '@mui/material'
-import {useState,useEffect,useCallback,useMemo} from 'react';
+import {Grid,Card,CardContent,Typography,TextField,Button,CircularProgress} from '@mui/material'
+import {useState,useEffect} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import axios from 'axios';
 import AddBoxRoundedIcon from '@mui/icons-material/AddToQueue';
 import DeleteIcon from '@mui/icons-material/Delete';
 import IconButton from '@mui/material/IconButton';

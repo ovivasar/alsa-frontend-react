@@ -1,5 +1,5 @@
-import {Modal,Grid,Card,CardContent,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl, Switch, FormControlLabel, Checkbox} from '@mui/material'
-import { useState,useEffect, useRef, Component, useMemo, useCallback } from 'react';
+import {Modal,Grid,Card,CardContent,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl, Checkbox} from '@mui/material'
+import { useState,useEffect, useMemo, useCallback } from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import IconButton from '@mui/material/IconButton';
 import FindIcon from '@mui/icons-material/FindInPage';
@@ -9,7 +9,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Datatable, {createTheme} from 'react-data-table-component';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
-import { orange } from '@mui/material/colors';
 
 export default function OCargaFormDet() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";

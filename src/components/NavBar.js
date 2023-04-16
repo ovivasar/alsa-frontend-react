@@ -1,5 +1,5 @@
-import {AppBar, Box, Button, Container, Toolbar, Typography} from "@mui/material";
-import {Link,useNavigate} from "react-router-dom";
+import {Box, Container, Toolbar} from "@mui/material";
+import {useNavigate} from "react-router-dom";
 import IconButton from '@mui/material/IconButton';
 
 import HomeIcon from '@mui/icons-material/Home';
@@ -11,7 +11,7 @@ import QrCodeIcon from '@mui/icons-material/QrCode';
 import { blueGrey } from '@mui/material/colors';
 import Tooltip from '@mui/material/Tooltip';
 
-import { useState,useEffect, useRef, Component, useMemo, useCallback } from 'react';
+//import { useState,useEffect, useRef, Component, useMemo, useCallback } from 'react';
 
 export default function NavBar(props) {
   const navigate  = useNavigate();

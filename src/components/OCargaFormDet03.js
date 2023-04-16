@@ -1,20 +1,16 @@
-import {Modal,Grid,Card,CardContent,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl, Switch, FormControlLabel, Checkbox, Typography} from '@mui/material'
-import { useState,useEffect, useRef, Component, useMemo, useCallback } from 'react';
+import {Modal,Grid,Card,CardContent,TextField,Button,CircularProgress,Typography} from '@mui/material'
+import {useState,useEffect} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import IconButton from '@mui/material/IconButton';
 import FindIcon from '@mui/icons-material/FindInPage';
-import axios from 'axios';
 import React from 'react';
 import InputAdornment from '@mui/material/InputAdornment';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 import DeleteIcon from '@mui/icons-material/DeleteForeverRounded';
-import LocalShippingIcon from '@mui/icons-material/LocalShippingTwoTone';
-import PictureAsPdf from '@mui/icons-material/PictureAsPdf';
-import BorderColorIcon from '@mui/icons-material/QrCodeRounded';
 import swal from 'sweetalert';
 
-import Datatable, {createTheme} from 'react-data-table-component';
+import {createTheme} from 'react-data-table-component';
 
 export default function OCargaFormDet() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
