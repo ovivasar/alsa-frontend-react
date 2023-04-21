@@ -21,6 +21,7 @@ import OCargaFormDet01 from "./components/OCargaFormDet01";
 import OCargaFormDet02 from "./components/OCargaFormDet02";
 import OCargaFormDet03 from "./components/OCargaFormDet03";
 import OCargaGuiaPendientesList from "./components/OCargaGuiaPendientesList";
+import OCargaFormTraslado from "./components/OCargaFormTraslado";
 
 import VentaFormMovil from "./components/VentaFormMovil";
 import VentaFormDetTraslado from "./components/VentaFormDetTraslado";
@@ -116,6 +117,8 @@ function App() {
           <Route path="/ocargadet01/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet01 />} />
           <Route path="/ocargadet02/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet02 />} />
           <Route path="/ocargadet03/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet03 />} />
+          
+          <Route path="/ocargadettraslado/:fecha_proceso/:ano/:numero/:item" element={<OCargaFormTraslado />} />
 
           <Route path="/ocargadetguiaspendientes/:fecha_proceso" element={<OCargaGuiaPendientesList />} />
           {/*  modo=edit, modo=clon  */}

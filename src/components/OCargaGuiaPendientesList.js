@@ -4,6 +4,7 @@ import { Button } from "@mui/material";
 import { useNavigate,useParams } from "react-router-dom";
 import FindIcon from '@mui/icons-material/FindInPage';
 import UpdateIcon from '@mui/icons-material/UpdateSharp';
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import Add from '@mui/icons-material/Add';
 
 import IconButton from '@mui/material/IconButton';
@@ -135,6 +136,15 @@ export default function OCargaGuiaPendientesList() {
       width: '150px',
       sortable: true
     },
+    { name:'PAGAR', 
+      button: true,  
+      width: '50px',
+      cell: (row) => (
+        <IconButton onClick={() => handleModificar(row)} color="success">
+          <AccountBalanceWalletOutlinedIcon />
+        </IconButton>
+      )
+    },
     { name:'GRUPO', 
       selector:row => row.grupo,
       width: '150px',
@@ -160,6 +170,11 @@ export default function OCargaGuiaPendientesList() {
     });
     setRegistrosdet(resultadosBusqueda);
 }
+
+const handleModificar = (row) => {
+  // Aquí puedes agregar la lógica para modificar la fila seleccionada
+  console.log(`Modificar fila ${row.numero}`);
+};
 
 //////////////////////////////////////////////////////////
   useEffect( ()=> {
@@ -195,7 +210,7 @@ export default function OCargaGuiaPendientesList() {
       theme="solarized"
       columns={columnas}
       data={registrosdet}
-      selectableRows
+      //selectableRows
       contextActions={contextActions}
       actions={actions}
 			onSelectedRowsChange={handleRowSelected}
@@ -204,7 +219,8 @@ export default function OCargaGuiaPendientesList() {
       selectableRowsComponent={Checkbox} // Pass the function only
       sortIcon={<ArrowDownward />}
       dense={true}
-      //customStyles={{ rows: { minHeight: '10px' } }}
+      highlightOnHover //resalta la fila
+      //pointerOnHover //coloca simbolo dedito como si fuera hacer click
     >
     </Datatable>
 

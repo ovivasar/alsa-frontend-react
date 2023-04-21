@@ -22,6 +22,9 @@ import { utils, writeFile } from 'xlsx';
 
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+//import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import Tooltip from '@mui/material/Tooltip';
 
 export default function OCargaList() {
   //Para recibir parametros desde afuera
@@ -52,6 +55,13 @@ export default function OCargaList() {
       hover: 'rgba(0,0,0,.08)',
       disabled: 'rgba(0,0,0,.12)',
     },
+    overrides: {
+      MuiTable: {
+        root: {
+          borderSpacing: '0',
+        },
+      },
+    }    
   }, 'dark');
   ///////////////////////
   function exportToExcel(data) {
@@ -103,21 +113,6 @@ export default function OCargaList() {
 			confirmaEliminacion(strAno,strNumero,nItem);
 		};
 
-    const handleUpdate = () => {
-			var strFecha;
-      var strAno;
-      var strNumero;
-      var nItem;
-      var sModo;
-      strFecha = selectedRows.map(r => r.fecha);
-      strNumero = selectedRows.map(r => r.numero);
-      nItem = selectedRows.map(r => r.item);
-      const fechaArmada = new Date(strFecha); //ok con hora 00:00:00
-      strAno = (fechaArmada.getFullYear()).toString(); 
-      
-      sModo = "editar";
-      navigate(`/ocargadet/${params.fecha_proceso}/${strAno}/${strNumero}/${nItem}/${sModo}/edit`);      
-		};
 
     const handleUpdateGrupo = () => {
 			var strFecha;
@@ -158,12 +153,6 @@ export default function OCargaList() {
        ELIMINAR <DeleteIcon/>
 			</Button>
 			
-      {/*
-      <Button key="modificar" onClick={handleUpdate} >
-       MODIFICAR<EditRoundedIcon/>
-			</Button>
-    */}
-    
       <Button key="modificar_grupo" onClick={handleUpdateGrupo} >
        MOD. GRUPO<EditRoundedIcon/>
 			</Button>
@@ -194,7 +183,7 @@ export default function OCargaList() {
     //La data, corresponde al mes de login
     //le cargaremos fecha actual si parametro no existe
     strFechaIni=params.fecha_ini;
-    console.log("Fecha ini:",strFechaIni);
+    //console.log("Fecha ini:",strFechaIni);
 
     strFecha=params.fecha_proceso;
     
@@ -206,18 +195,22 @@ export default function OCargaList() {
       strFecha = strFecha.substr(0,nPos);
     }
     
-    console.log("valor antes de cargar backend: ", valorVista);
+    //console.log("valor antes de cargar backend: ", valorVista);
     //al reves por mientras
-    if (valorVista=="analisis"){
+    if (valorVista==="analisis"){
       response = await fetch(`${back_host}/ocargaplan/${strFechaIni}/${strFecha}`);
     }else{
-      if (valorVista=="diario"){
+      if (valorVista==="diario"){
         response = await fetch(`${back_host}/ocargaplan/${strFecha}/${strFecha}`);
       }else{
-        response = await fetch(`${back_host}/ocarga/${strFecha}`);
+        if (valorVista==="transbordos"){
+          response = await fetch(`${back_host}/ocargaplantransb/${strFecha}`);
+        }
+        else{//El resumen nomas
+          response = await fetch(`${back_host}/ocarga/${strFecha}`);
+        }
       }
     }
-
     
     const data = await response.json();
     setRegistrosdet(data);
@@ -234,8 +227,9 @@ export default function OCargaList() {
       selector:row => row.pedido,
       sortable: true
     },
-    { name:'NUMERO', 
+    { name:'ORDEN', 
       selector:row => row.numero,
+      width: '90px',
       sortable: true
     },
     { name:'ESTADO', 
@@ -246,28 +240,82 @@ export default function OCargaList() {
       selector:row => row.ref_razon_social,
       sortable: true
     },
-    { name:'ITEM', 
+    { name:'#', 
       selector:row => row.item,
+      sortable: true,
+      width: '70px'
+    },
+    { name:'TRASLA', 
+      //button: true,  
+      width: '90px',
+      cell: (row) => (
+        <div style={{ display: row.tb === '0' ? 'none' : 'block' }}>
+          <IconButton onClick={() => handleTraslado(row)} color="success">
+            <LocalShippingIcon />
+          </IconButton>
+        </div>                
+      )
+    },
+    { name:'CANT.', 
+      selector:row => row.cantidad,
+      width: '90px',
       sortable: true
+    },
+    { name:'UND', 
+      selector:row => row.unidad_medida,
+      sortable: true,
+      width: '60px'
     },
     { name:'DESCRIPCION', 
       selector:row => row.descripcion,
+      cell: (row) => (
+        <Tooltip title={row.descripcion ? row.descripcion : ''}>
+          <span>
+          {row.descripcion ? row.descripcion.substring(0, 10) + '...' : ''}
+          </span>
+        </Tooltip>
+              ),      
       sortable: true
     },
     { name:'OPERACION', 
       selector:row => row.operacion,
       sortable: true
     },
+    { name:'SACOS', 
+      selector:row => row.sacos_real,
+      sortable: true
+    },
     { name:'ENTREGA', 
       selector:row => row.zona_entrega,
       sortable: true
     },
-    { name:'GUIA', 
-      selector:row => row.guia01,
+    { name:'TICK #', 
+      selector:row => row.ticket,
       sortable: true
     },
-    { name:'TICKET', 
-      selector:row => row.ticket,
+    { name:'TICK TN.', 
+      selector:row => row.peso_ticket,
+      sortable: true
+    },
+    { name:'TICK SACO', 
+      selector:row => row.sacos_ticket,
+      sortable: true
+    },
+    { name:'TRASL #', 
+      selector:row => row.ticket_tras,
+      sortable: true
+    },
+    { name:'TRASL TN.', 
+      selector:row => row.peso_ticket_tras,
+      sortable: true
+    },
+    { name:'TRASL SACO', 
+      selector:row => row.sacos_ticket_tras,
+      sortable: true
+    },
+    
+    { name:'GUIA', 
+      selector:row => row.guia01,
       sortable: true
     },
     { name:'LOTE ASIGNADO', 
@@ -304,10 +352,26 @@ export default function OCargaList() {
     },
     { name:'AÑO', 
       selector:row => row.ano,
-      sortable: true
+      sortable: true,
+      /*cell: row => (
+        //<div style={{ visibility: 'hidden' }}>
+        //  {row.ano}
+        //</div>
+        <div style={{ display: row.tb === '0' ? 'none' : 'block' }}>
+            {row.ano}
+        </div>        
+      )*/
     }
   ];
 
+  const handleTraslado = (row) => {
+    // Aquí puedes agregar la lógica para modificar la fila seleccionada
+    console.log(`Modificar fila ${row.numero}`);
+    //Mostrar formulario para completar datos: ticket_tras, peso_ticket_tras, sacos_ticket_tras
+    navigate(`/ocargadettraslado/${params.fecha_proceso}/${row.ano}/${row.numero}/${row.item}`)
+
+  };
+  
   const confirmaEliminacion = async(ano,numero,item) =>{
     //Eliminar por numeor y item, estamos en vista planilla
     await swal({
@@ -403,6 +467,26 @@ export default function OCargaList() {
       setRegistrosdet(resultadosBusqueda);
   }
 
+  const customStyles = {
+    rows: {
+        style: {
+            minHeight: '72px', // override the row height
+        },
+    },
+    headCells: {
+        style: {
+            paddingLeft: '0px', // override the cell padding for head cells
+            paddingRight: '8px',
+        },
+    },
+    cells: {
+        style: {
+            paddingLeft: '0px', // override the cell padding for data cells
+            paddingRight: '8px',
+        },
+    },
+  };
+
   //////////////////////////////////////////////////////////
   useEffect( ()=> {
       cargaRegistro();
@@ -466,9 +550,10 @@ export default function OCargaList() {
       <ToggleButton value="resumen">Resumen</ToggleButton>
       <ToggleButton value="analisis">Analisis</ToggleButton>
       <ToggleButton value="diario">Diario</ToggleButton>
+      <ToggleButton value="transbordos">Transb. Diario</ToggleButton>
     </ToggleButtonGroup>      
     </div>
-
+    
     <Datatable
       title="Registro - Ordenes Carga"
       theme="solarized"
@@ -479,11 +564,13 @@ export default function OCargaList() {
       actions={actions}
 			onSelectedRowsChange={handleRowSelected}
 			clearSelectedRows={toggleCleared}
+      highlightOnHover
       //pagination
 
       selectableRowsComponent={Checkbox} // Pass the function only
       sortIcon={<ArrowDownward />}  
-
+      dense={true}
+      customStyles={customStyles}
     >
 
     </Datatable>

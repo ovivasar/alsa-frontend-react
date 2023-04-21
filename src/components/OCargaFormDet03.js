@@ -10,8 +10,6 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteIcon from '@mui/icons-material/DeleteForeverRounded';
 import swal from 'sweetalert';
 
-import {createTheme} from 'react-data-table-component';
-
 export default function OCargaFormDet() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
@@ -19,31 +17,6 @@ export default function OCargaFormDet() {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Seccion Modal
-  createTheme('solarized', {
-    text: {
-      //primary: '#268bd2',
-      primary: '#ffffff',
-      secondary: '#2aa198',
-    },
-    background: {
-      //default: '#002b36',
-      default: '#1e272e'
-    },
-    context: {
-      background: '#cb4b16',
-      //background: '#1e272e',
-      text: '#FFFFFF',
-    },
-    divider: {
-      default: '#073642',
-    },
-    action: {
-      button: 'rgba(0,0,0,.54)',
-      hover: 'rgba(0,0,0,.08)',
-      disabled: 'rgba(0,0,0,.12)',
-    },
-  }, 'dark');
-
   const [abierto,setAbierto] = useState(false);
   const [numGuia,setNumGuia] = useState("");
   const [ocargaDetModal,setocargaDetModal] = useState({
