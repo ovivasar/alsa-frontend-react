@@ -13,17 +13,26 @@ import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
 
 import swal from 'sweetalert';
 import logo from '../alsa.png';
-import miImagenCamion from '../camion3.png';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
-import LineWeightIcon from '@mui/icons-material/LineWeight';
-import InputAdornment from '@mui/material/InputAdornment';
-import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
-import ViewCompactIcon from '@mui/icons-material/ViewCompact';
+
+import { useAuth0 } from '@auth0/auth0-react'; //new para cargar permisos luego de verificar registro en bd
 
 export default function OCargaForm() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   ////////////////////////////////////////////////////////////////////////////////////////
+
+  //Permisos Nivel 02
+  const {user, isAuthenticated } = useAuth0();
+  const [permisosComando, setPermisosComando] = useState([]); //MenuComandos
+  const [pOCargaP0201_02_01, setPOCargaP0201_02_01] = useState(false); //Modifica Datos Carga Programado
+  const [pOCargaP0201_02_04, setPOCargaP0201_02_04] = useState(false); //Eliminar Detalle Programado
+
+  const [pOCargaP0202_02_01, setPOCargaP0202_02_01] = useState(false); //Modifica Datos Carga Ejec
+  const [pOCargaP0202_02_02, setPOCargaP0202_02_02] = useState(false); //Modifica Datos Almacen Ejec
+  const [pOCargaP0202_02_03, setPOCargaP0202_02_03] = useState(false); //Modifica Datos Estibaje Ejec
+  const [pOCargaP0202_02_04, setPOCargaP0202_02_04] = useState(false); //Eliminar Detalle Ejec
+
   const createPdf = async () => {
     const pdfDoc = await PDFDocument.create()
     const page = pdfDoc.addPage();
@@ -93,8 +102,15 @@ export default function OCargaForm() {
     //y=y-15; //aumentamos linea nueva
     //Calculamos el punto x, acorde al largo de la razon social (centradito chochera ... claro pi cojuda)
     //console.log(ocarga.ref_razon_social);
-    let centro = (page.getWidth()/2) - (ocarga.ref_razon_social.toString().length)/2 - margin - 40;
-    page.drawText("CLIENTE: " + ocarga.ref_razon_social, { x:centro, y, size: 10 });
+    let centro;
+    if (ocarga.ref_razon_social===null) {
+      centro = 0;
+    }else{
+      centro = (page.getWidth()/2) - (ocarga.ref_razon_social.toString().length)/2 - margin - 40;
+      page.drawText("CLIENTE: " + ocarga.ref_razon_social?.toString() ?? "", { x:centro, y, size: 10 });
+    }
+    
+    //person.pedido?.toString() ?? ""
     y=y-12; //aumentamos linea nueva
     y=y-12; //aumentamos linea nueva
     y=y-5; //aumentamos linea nueva
@@ -120,6 +136,12 @@ export default function OCargaForm() {
       //Calculamos el punto x, acorde al largo de la razon social (centradito chochera ... claro pi cojuda)
       centro = (page.getWidth()/2) - (person.operacion.toString().length)/2 - margin/1.2;
       page.drawText(text, { x:centro, y:y+4-espaciadoDet, size: 12, font }); //Texto de Titulo de Barra (Operacion)
+      //Acompañamos horas inicio y fin en la misma coordenada y 
+      page.drawText("HORA INI: ", { x, y:y+4-espaciadoDet, size: 10, font });
+      page.drawText(person.e_hora_ini ?? "-", { x:x+50, y:y+4-espaciadoDet, size: 10, font });
+      page.drawText("HORA FIN: ", { x:x+400, y:y+4-espaciadoDet, size: 10, font });
+      page.drawText(person.e_hora_fin ?? "-", { x:x+450, y:y+4-espaciadoDet, size: 10, font });
+
 
       //1ERA LINEA
       //page.drawText("PRODUCTO", { x, y:textY-espaciadoDet, size: 8 });
@@ -136,7 +158,7 @@ export default function OCargaForm() {
       
       espaciadoDet = espaciadoDet+15;
 
-      page.drawText(person.pedido.toString(), { x, y: textY-espaciadoDet, size: 10, font });
+      page.drawText(person.pedido?.toString() ?? "", { x, y: textY-espaciadoDet, size: 10, font });
       page.drawText(person.cantidad.toString(), { x:x+100, y: textY-espaciadoDet, size: 10, font });
       page.drawText(person.unidad_medida?.toString() ?? "", { x:x+200, y: textY-espaciadoDet, size: 10, font }); //Actualizar urgente
       if (person.tr_placa===null) {
@@ -147,15 +169,15 @@ export default function OCargaForm() {
       if (person.tr_placacargado===null) {
         page.drawText("-", { x:x+400, y: textY-espaciadoDet, size: 10, font });
       }else{
-        page.drawText(person.tr_placacargado, { x:x+400, y: textY-espaciadoDet, size: 10, font });
+        page.drawText(person.tr_placacargado?.toString() ?? "", { x:x+400, y: textY-espaciadoDet, size: 10, font });
       }
 
       //2DA LINEA
       espaciadoDet = espaciadoDet+15;
       page.drawText("LOTE CARGA", { x, y:textY-espaciadoDet, size: 8 });
-      page.drawText("LOTE DESCARGA", { x:x+100, y:textY-espaciadoDet, size: 8 });
-      page.drawText("HORA INI", { x:x+200, y:textY-espaciadoDet, size: 8 });
-      page.drawText("HORA FIN", { x:x+300, y:textY-espaciadoDet, size: 8 });
+      page.drawText("LOTE DESCARGA", { x:x+200, y:textY-espaciadoDet, size: 8 });
+      //page.drawText("HORA INI", { x:x+200, y:textY-espaciadoDet, size: 8 });
+      //page.drawText("HORA FIN", { x:x+300, y:textY-espaciadoDet, size: 8 });
       page.drawText("ESTIBADORES", { x:x+400, y:textY-espaciadoDet, size: 8 });
 
       espaciadoDet = espaciadoDet+15;
@@ -165,19 +187,9 @@ export default function OCargaForm() {
         page.drawText(person.lote_procedencia, { x, y: textY-espaciadoDet, size: 10, font, color:rgb(0,0.7,0) });
       }
       if (person.lote_asignado===null) {
-        page.drawText("-", { x:x+100, y: textY-espaciadoDet, size: 10, font });
-      }else{
-        page.drawText(person.lote_asignado, { x:x+100, y: textY-espaciadoDet, size: 10, font, color:rgb(0,0.2,0.8) });
-      }
-      if (person.e_hora_ini===null) {
         page.drawText("-", { x:x+200, y: textY-espaciadoDet, size: 10, font });
       }else{
-        page.drawText(person.e_hora_ini.toString(), { x:x+200, y: textY-espaciadoDet, size: 10, font });
-      }
-      if (person.e_hora_fin===null) {
-        page.drawText("-", { x:x+300, y: textY-espaciadoDet, size: 10, font });
-      }else{
-        page.drawText(person.e_hora_fin.toString(), { x:x+300, y: textY-espaciadoDet, size: 10, font });
+        page.drawText(person.lote_asignado, { x:x+200, y: textY-espaciadoDet, size: 10, font, color:rgb(0,0.2,0.8) });
       }
       if (person.e_estibadores===null) {
         page.drawText("-", { x:x+400, y: textY-espaciadoDet, size: 10, font });
@@ -188,13 +200,15 @@ export default function OCargaForm() {
       //3ERA LINEA
       espaciadoDet = espaciadoDet+15;
       page.drawText("OBSERVACIONES", { x, y:textY-espaciadoDet, size: 8 });
-
+      page.drawText("SACOS REAL", { x:x+400, y: textY-espaciadoDet, size: 8, font });
+      
       espaciadoDet = espaciadoDet+15;
       if (person.e_observacion===null) {
         page.drawText("-", { x, y: textY-espaciadoDet, size: 10, font });
       }else{
         page.drawText(person.e_observacion, { x, y: textY-espaciadoDet, size: 10, font });
       }
+      page.drawText(person.sacos_real?.toString() ?? "0", { x:x+400, y: textY-espaciadoDet, size: 10, font });
 
       //al final del bucle, aumentamos una linea simple :) claro pi ...
       espaciadoDet = espaciadoDet+50;
@@ -296,15 +310,64 @@ export default function OCargaForm() {
     //Obtener json respuesta, para extraer cod,serie,num y elemento
     navigate(`/ocarga/${data.ano}/${data.numero}/edit`);
   };
+
+  const cargaPermisosMenuComando = async(idMenu)=>{
+    //Realiza la consulta a la API de permisos
+    fetch(`https://alsa-backend-js-production.up.railway.app/seguridad/${user.email}/${idMenu}`, {
+      method: 'GET'
+    })
+    .then(response => response.json())
+    .then(permisosData => {
+      // Guarda los permisos en el estado
+      setPermisosComando(permisosData);
+      console.log(permisosComando);
+      let tienePermiso;
+      // Verifica si existe el permiso de acceso 'ventas'
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0201-02-01'); //Mod Datos Carga Progr
+      if (tienePermiso) {
+        setPOCargaP0201_02_01(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0201-02-04'); //Eliminar Det Progr
+      if (tienePermiso) {
+        setPOCargaP0201_02_04(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0202-02-01'); //Mod Datos Carga Ejec
+      if (tienePermiso) {
+        setPOCargaP0202_02_01(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0202-02-02'); //Mod Datos Almac Ejec
+      if (tienePermiso) {
+        setPOCargaP0202_02_02(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0202-02-03'); //Mod Datos Estiba Ejec
+      if (tienePermiso) {
+        setPOCargaP0202_02_03(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0202-02-04'); //Eliminar Det Ejec
+      if (tienePermiso) {
+        setPOCargaP0202_02_04(true);
+      }
+    })
+    .catch(error => {
+      console.log('Error al obtener los permisos:', error);
+    });
+  }
   
   //Aqui se leen parametros en caso lleguen
   useEffect( ()=> {
     if (params.numero){
-      mostrarOCargaDetalle(params.ano,params.numero);
+      mostrarOCargaDetalle(params.ano,params.numero,params.tipo);
       mostrarOCarga(params.ano,params.numero);
     }
+
+    //NEW codigo para autenticacion y permisos de BD
+    if (isAuthenticated && user && user.email) {
+      // cargar permisos de sistema
+      cargaPermisosMenuComando('02'); //Alimentamos el useState permisosComando
+      //console.log(permisosComando);
+    }
     
-  },[params.numero]);
+  },[params.numero, isAuthenticated, user]);
 
   //Rico evento change
   const handleChange = e => {
@@ -327,8 +390,8 @@ export default function OCargaForm() {
 
   };
   
-  const mostrarOCargaDetalle = async (ano,numero) => {
-    const res = await fetch(`${back_host}/ocargadet/${ano}/${numero}`);
+  const mostrarOCargaDetalle = async (ano,numero,tipo) => {
+    const res = await fetch(`${back_host}/ocargadettipo/${ano}/${numero}/${tipo}`);
     const dataDet = await res.json();
     setRegistrosdet(dataDet);
     //console.log(registrosdet.length);
@@ -371,7 +434,7 @@ export default function OCargaForm() {
       <div></div>
       <Grid item xs={12}>
             
-            <Card sx={{mt:3}}
+            <Card sx={{mt:0}}
                   style={{
                     background:'#1e272e',
                     padding:'1rem'
@@ -427,97 +490,6 @@ export default function OCargaForm() {
                               </Button>
                           </Grid>
 
-                          <Grid item xs={2}>
-                            <TextField variant="outlined" 
-                                    label="TICKET"
-                                    InputProps={{
-                                      startAdornment: (
-                                        <InputAdornment position="start">
-                                          <BookmarkBorderIcon />
-                                        </InputAdornment>
-                                      ),
-                                    }}                                          
-                                    sx={{display:'block',margin:'.5rem 0'}}
-                                    name="ticket"
-                                    value={ocarga.ticket}
-                                    onChange={handleChange}
-                                    inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                    InputLabelProps={{ style:{color:'white'} }}
-                            />
-                          </Grid>
-
-                          <Grid item xs={1.5}>
-                                  <TextField variant="outlined" 
-                                          label="TN."
-                                          InputProps={{
-                                            startAdornment: (
-                                              <InputAdornment position="start">
-                                                <LineWeightIcon />
-                                              </InputAdornment>
-                                            ),
-                                          }}                                          
-                                          sx={{display:'block',margin:'.5rem 0'}}
-                                          name="peso_ticket"
-                                          value={ocarga.peso_ticket}
-                                          onChange={handleChange}
-                                          inputProps={{ style:{color:'white', textAlign: 'center'} }}
-                                          InputLabelProps={{ style:{color:'white'} }}
-                                  />
-                          </Grid>
-
-                          <Grid item xs={1.5}>
-                                  <TextField variant="outlined" 
-                                          label="SACOS"
-                                          //type="number"
-                                          step="1"
-                                          InputProps={{
-                                            startAdornment: (
-                                              <InputAdornment position="start">
-                                                <ViewCompactIcon />
-                                              </InputAdornment>
-                                            ),
-                                          }}                                          
-                                          sx={{display:'block',margin:'.5rem 0'}}
-                                          name="sacos_ticket"
-                                          value={ocarga.sacos_ticket}
-                                          onChange={handleChange}
-                                          inputProps={{ style:{color:'white', textAlign: 'center'} }}
-                                          InputLabelProps={{ style:{color:'white'} }}
-                                  />
-                          </Grid>
-
-                          <Grid item xs={0.8}>
-                              <Button variant='contained' 
-                                      color='primary' 
-                                      type='submit'
-                                      style={{backgroundImage: `url(${miImagenCamion})`, 
-                                              backgroundSize: 'contain',
-                                              backgroundSize: '100%', // Puedes ajustar el tamaño de la imagen aquí
-                                              backgroundPosition: 'center top',
-                                              backgroundRepeat: 'no-repeat',
-                                              display: 'flex',
-                                              flexDirection: 'row',
-                                              justifyContent: 'flex-start',   
-                                              //opacity: 0.3, // Puedes ajustar la transparencia del texto aquí                                           
-                                              color: 'rgba(255, 255, 255, 0.3)', // Puedes ajustar la transparencia del texto aquícolor: 'rgba(255, 255, 255, 0.8)' // Puedes ajustar la transparencia del texto aquí
-                                              width: '100px', // Puedes ajustar el ancho del botón aquí
-                                              height: '55px' // Puedes ajustar la altura del botón aquí                                              
-                                        }}
-                                      sx={{margin:'.5rem 0', height:55}}
-                                      disabled={
-                                                !ocarga.ticket || 
-                                                !ocarga.peso_ticket ||
-                                                !ocarga.sacos_ticket
-                                                }
-                                      >
-                                      { cargando ? (
-                                      <CircularProgress color="inherit" size={24} />
-                                      ) : (
-                                        editando ?
-                                      '' : 'Grabar')
-                                      }
-                              </Button>
-                          </Grid>
 
                       </Grid>
                     </form>
@@ -531,14 +503,14 @@ export default function OCargaForm() {
         <Card sx={{mt:0.1}} 
             style={{
               background:'#1e272e',
-              padding:'1rem',
+              padding:'0.5rem',
               height:'3rem',
               marginTop:".2rem"
             }}
             key={registrosdet.ref_documento_id}
             >
           
-          <CardContent style={{color:'#4264EE'}}>
+          <CardContent style={{color:'#4264EE', padding:'0.5rem'}}>
 
               <Grid container spacing={0.5}>
 
@@ -547,7 +519,8 @@ export default function OCargaForm() {
                                 onClick = {()=> {
                                   let agrega;
                                   agrega = "nuevo"
-                                  navigate(`/ocargadet01/${ocarga.fecha}/${params.ano}/${params.numero}/${agrega}/new`);
+                                  //especificar que tipo esta solicitando para nuevo
+                                  navigate(`/ocargadet01/${ocarga.fecha}/${params.ano}/${params.numero}/${params.tipo}/${agrega}/new`);
                                   }
                                 }
                     >
@@ -580,11 +553,11 @@ export default function OCargaForm() {
                     UND
                   </Grid>
 
-                  <Grid item xs={1}>
+                  <Grid item xs={2}>
                     PRODUCTO
                   </Grid>
 
-                  <Grid item xs={2}>
+                  <Grid item xs={1.5}>
                     CLIENTE
                   </Grid>
 
@@ -596,13 +569,10 @@ export default function OCargaForm() {
                     PLACA CARGADO
                   </Grid>
 
-                  <Grid item xs={1}>
+                  <Grid item xs={1.5}>
                     ENTREGA
                   </Grid>
-                  
-                  <Grid item xs={1}>
-                    PEDIDO
-                  </Grid>
+                 
 
               </Grid>
 
@@ -617,51 +587,90 @@ export default function OCargaForm() {
             <Card sx={{mt:0.1}}
             style={{
               background:'#1e272e',
-              padding:'1rem',
+              padding:'0.5rem',
               height:'3rem',
               marginTop:".2rem"
             }}
             key={indice.ref_documento_id}
             >
           
-          <CardContent style={{color:'white'}}>
+          <CardContent style={{color:'white', padding:'0.5rem'}}>
 
               <Grid container spacing={0.5}>
 
                   <Grid item xs={0.5}>
                     <Tooltip title="DATOS Carga/Descarga">
+
+                    { ( (params.tipo==="P" && pOCargaP0201_02_01) || (params.tipo==="E" && pOCargaP0202_02_01) ) ? 
+                    (      
                       <IconButton color="secondary" aria-label="upload picture" component="label" size="small"
                                   sx={{ color: '#0277BD' }}
                                   onClick = {()=> navigate(`/ocargadet01/${ocarga.fecha}/${params.ano}/${indice.numero}/${indice.item}/editar/edit`)}
                       >
                         <DnsTwoToneIcon />
                       </IconButton>
+                    ):
+                    (
+                      <IconButton color="inherit" aria-label="upload picture" component="label" size="small"
+                      >
+                        <DnsTwoToneIcon />
+                      </IconButton>
+                      )
+                    }
+
                     </Tooltip>
                   </Grid>
                   
                   <Grid item xs={0.5}>
                     <Tooltip title="DATOS Almacen">
+
+                    { ( params.tipo==="E" && pOCargaP0202_02_02 ) ? 
+                    (      
                       <IconButton color="primary" aria-label="upload picture" component="label" size="small"
                                   sx={{ color: '#1565C0' }}
                                   onClick = {()=> navigate(`/ocargadet02/${ocarga.fecha}/${params.ano}/${indice.numero}/${indice.item}/editar/edit`)}
                       >
                         <HolidayVillageIcon />
                       </IconButton>
+                    ):
+                    (
+                      <IconButton color="inherit" aria-label="upload picture" component="label" size="small"
+                      >
+                        <HolidayVillageIcon />
+                      </IconButton>
+                      )
+                    }
+
                     </Tooltip>  
                   </Grid>
                   
                   <Grid item xs={0.5}>
                     <Tooltip title="DATOS Peso/Estibaje">
+
+                    { ( params.tipo==="E" && pOCargaP0202_02_03 ) ? 
+                    (      
                       <IconButton color="success" aria-label="upload picture" component="label" size="small"
                                   sx={{ color: '#283593' }}
                                   onClick = {()=> navigate(`/ocargadet03/${ocarga.fecha}/${params.ano}/${ocarga.numero}/${indice.item}/editar/edit`)}
                       >
                         <SummarizeIcon />
                       </IconButton>
+                    ):
+                    (
+                      <IconButton color="inherit" aria-label="upload picture" component="label" size="small"
+                      >
+                        <SummarizeIcon />
+                      </IconButton>
+                      )
+                    }
+
                     </Tooltip>
                   </Grid>
 
                   <Grid item xs={0.5}>
+
+                  { ( (params.tipo==="P" && pOCargaP0201_02_04) || (params.tipo==="E" && pOCargaP0202_02_04) ) ? 
+                    (      
                     <IconButton color="warning" aria-label="upload picture" component="label" size="small"
                                 onClick = { () => confirmaEliminacionDet(params.ano
                                                                           ,params.numero
@@ -670,10 +679,19 @@ export default function OCargaForm() {
                     >
                       <DeleteIcon />
                     </IconButton>
+                    ):
+                    (
+                      <IconButton color="inherit" aria-label="upload picture" component="label" size="small"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                      )
+                    }
+
                   </Grid>
 
                   <Grid item xs={1.5}>
-                      <Typography fontSize={15} marginTop="0rem" >
+                      <Typography fontSize={13} marginTop="0rem" >
                       {indice.operacion}
                       </Typography>
                   </Grid>
@@ -690,41 +708,36 @@ export default function OCargaForm() {
                       </Typography>
                   </Grid>
 
-                  <Grid item xs={1}>
-                      <Typography fontSize={15} marginTop="0" >
+                  <Grid item xs={2}>
+                      <Typography fontSize={13} marginTop="0" >
                         {indice.descripcion}
                       </Typography>
                   </Grid>
 
-                  <Grid item xs={2}>
-                      <Typography fontSize={15} marginTop="0rem" >
+                  <Grid item xs={1.5}>
+                      <Typography fontSize={13} marginTop="0rem" >
                         {indice.ref_razon_social}
                       </Typography>
                   </Grid>
 
                   <Grid item xs={1}>
-                      <Typography fontSize={15} marginTop="0" >
+                      <Typography fontSize={13} marginTop="0" >
                         {indice.tr_placa}
                       </Typography>
                   </Grid>
 
                   <Grid item xs={1}>
-                      <Typography fontSize={15} marginTop="0" >
+                      <Typography fontSize={13} marginTop="0" >
                         {indice.tr_placacargado}
                       </Typography>
                   </Grid>
 
-                  <Grid item xs={1}>
-                      <Typography fontSize={15} marginTop="0" >
-                        {indice.zona_entrega}
+                  <Grid item xs={1.5}>
+                      <Typography fontSize={13} marginTop="0" >
+                        {indice.zona_entrega} {indice.pedido}
                       </Typography>
                   </Grid>
 
-                  <Grid item xs={1}>
-                      <Typography fontSize={15} marginTop="0" >
-                        {indice.pedido}
-                      </Typography>
-                  </Grid>
 
               </Grid>
 

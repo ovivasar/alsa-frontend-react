@@ -1,19 +1,47 @@
-import {Grid,Card,CardContent,TextField,Button,CircularProgress, Typography} from '@mui/material'
-import { useState,useEffect } from 'react';
+import {Grid,Card,CardContent,TextField,Button,CircularProgress, Typography,Select, MenuItem, InputLabel, Box, FormControl} from '@mui/material'
+import {useState,useEffect,useRef} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import React from 'react';
+import axios from 'axios';
 
 export default function OCargaFormTraslado() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  const [producto_select,setProductoSelect] = useState([]);
+
+  const descTextFieldRef = useRef(null);
+
+  //Seccion keyDown Formulario
+  const primeroTextFieldRef = useRef(null);
+  const segundoTextFieldRef = useRef(null);
+  const terceroTextFieldRef = useRef(null);
+  const cuartoTextFieldRef = useRef(null);
+  const handleKeyDown = (event, afterRef, nextRef) => {
+    if (event.key === "Enter" || event.key === "ArrowDown") {
+      console.log(nextRef.name);
+      console.log(nextRef.current);
+      nextRef.current.focus();
+    }
+    if (event.key === "ArrowUp") {
+      console.log("subiendo");
+      console.log(afterRef.name);
+      console.log(afterRef.current);
+      afterRef.current.focus();
+    }
+  };
+  /////////////////////////////////////////////////////////
 
   //experimento
   const [updateTrigger, setUpdateTrigger] = useState({});
   ////////////////////////////////////////////////////////////////////////////////////////
   const [cargando,setCargando] = useState(false);
   const [editando,setEditando] = useState(false);
-  const [ePeso, setEPeso] = useState('');
+  
+  const [kgSaco, setkgSaco] = useState('50');
+
+  const [sacosDescarguio, setSacosDescarguio] = useState('');
+  const [tnDescarguio, setTnDescarguio] = useState('');
 
   const navigate = useNavigate();
   const params = useParams();
@@ -33,12 +61,14 @@ export default function OCargaFormTraslado() {
       id_producto:'',   //ventas
       descripcion:'',   //ventas
       unidad_medida:'',   //ventas
+      ref_razon_social:'',   //ventas
       cantidad:'',      //ventas
       operacion:'DESCARGUIO',     //ocarga-fase01
+      e_observacion:'', //new 
 
-      ticket_tras:'',       //new
-      peso_ticket_tras:'',  //new
-      sacos_ticket_tras:'', //new
+      ticket_tras:'',       //new por la puras
+      peso_ticket_tras:'',  //new por la puras
+      sacos_ticket_tras:'', //new por la puras
 
       registrado:'1'
   })
@@ -46,41 +76,39 @@ export default function OCargaFormTraslado() {
   const handleSubmit = async(e) => {
     e.preventDefault();
     setCargando(true);
+    //datos para insertar adicional DESCARGUIO
+    ocargaDet.id_empresa = '1';
+    ocargaDet.id_punto_venta = '1001';
+    ocargaDet.ref_razon_social = '-'; //para evitar null en filtro
+    ocargaDet.operacion = 'DESCARGUIO';
+    //ocargaDet.descripcion = '-'; //para evitar null en filtro
+    ocargaDet.fecha2 = params.fecha_proceso;
+    ocargaDet.unidad_medida = 'TNE'; //(Por Default)
+    ocargaDet.sacos_real = sacosDescarguio; //(Form digitado)
+    ocargaDet.cantidad = tnDescarguio; //(Form TN.aprox/BLS calculado)
     
+    ocargaDet.peso_ticket = tnDescarguio; //(Form TN.aprox/BLS calculado)
+    ocargaDet.sacos_ticket = sacosDescarguio; //(Form TN.aprox/BLS calculado)
+    
+    ocargaDet.registrado = '1'; //(Por Default)
+    ocargaDet.tipo = 'E'; //(Por Default)
+
     //Cambiooo para controlar Edicion
     if (editando){
-        
-        console.log("actualizando");
-        //backend: actualizarOCargaTicketTraslado
+        //console.log("actualizando");
+        //console.log(ocargaDet);
+        console.log("modo edicion");
         await fetch(`${back_host}/ocargatickettraslado/${params.ano}/${params.numero}/${params.item}`, {
           method: "PUT",
           body: JSON.stringify(ocargaDet),
           //headers: {'Access-Control-Allow-Origin': '*','Content-Type':'application/json'}
           headers: {'Content-Type':'application/json'}
         });
-        
-        
-        //console.log(ocargaDet);
-        //actualizar cantidad a grabar
-        const cant_nueva = (ePeso - ocargaDet.cantidad).toFixed(2);
-        //console.log(cant_nueva);
-        ocargaDet.cantidad = cant_nueva;
-        //console.log(ocargaDet.cantidad);
-
-        //Agregar orden detalle (con referencia de numero carga)
-        console.log("agregando adicional version traslado");
-        await fetch(`${back_host}/ocargatickettrasladoadd`, {
-            method: "POST",
-            body: JSON.stringify(ocargaDet),
-            headers: {"Content-Type":"application/json"}
-        });
-
     }else{
-        
-        //console.log(ocargaDet);
-        //Agregar orden detalle (con referencia de numero carga)
-        //console.log("agregando adicional");
-        await fetch(`${back_host}/ocargadetadd`, {
+        console.log(ocargaDet);
+        console.log(`${back_host}/ocargadetdescarguio`);
+        console.log("agregando nuevo");
+        await fetch(`${back_host}/ocargadetdescarguio`, {
             method: "POST",
             body: JSON.stringify(ocargaDet),
             headers: {"Content-Type":"application/json"}
@@ -101,23 +129,69 @@ export default function OCargaFormTraslado() {
   useEffect( ()=> {
     //Si tiene parametros, es editar (o clonar)
     //if (params.modo){
-      mostrarOCarga(params.ano,params.numero,params.item);
+      cargaProductoCombo();
+      //mostrarOCarga(params.ano,params.numero,params.item);
       //Luego se establece editando = true
     //}  
     
     //console.log(fecha_actual);
   },[params.ano, updateTrigger]);
+  
+  const cargaProductoCombo = () =>{
+    axios
+    .get(`${back_host}/producto`)
+    .then((response) => {
+        setProductoSelect(response.data);
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+  }
 
-  const handleEPesoChange = (event) => {
-    setEPeso(event.target.value); //almacena valor ePeso para uso posterior
-    setocargaDet({...ocargaDet, peso_ticket_tras: event.target.value});
+  const handleSacosDescarguioChange = (event) => {
+    var tn_aprox;
+    setSacosDescarguio(event.target.value); //almacena valor (SacosDescarguio) para uso posterior
+    if (kgSaco==='1'){
+      tn_aprox = event.target.value; //pasa como BLS
+    }else {
+      tn_aprox = (event.target.value * kgSaco/1000).toFixed(2); //convertido a TN          
+    }
 
-    //const cant_nueva = (event.target.value - ocargaDet.cantidad).toFixed(2);
+    setTnDescarguio(tn_aprox); //actualizamos en var local
+    
+    
+    setocargaDet({...ocargaDet, sacos_real: event.target.value});//actualizamos en objeto para insert/update
+    setocargaDet({...ocargaDet, cantidad: tn_aprox});//actualizamos en objeto para insert/update
+  };
+
+  const handleKgSacoChange = (event) => {
+    setkgSaco(event.target.value); //almacena valor (kgSaco) para uso posterior
+
+    const tn_aprox = (event.target.value * sacosDescarguio/1000).toFixed(2); //convertido a TN          
+    setocargaDet({...ocargaDet, peso_ticket_tras: tn_aprox});
     //setocargaDet({...ocargaDet, cantidad: cant_nueva});
   };
-  
+
+  const handleTnDescarguioChange = (event) => {
+    setTnDescarguio(event.target.value); //almacena valor (SacosDescarguio) para uso posterior
+
+    const tn_aprox_total = (event.target.value + tnDescarguio).toFixed(2); //convertido a TN          
+    setocargaDet({...ocargaDet, peso_ticket_tras: tn_aprox_total});
+    //setocargaDet({...ocargaDet, cantidad: cant_nueva});
+  };
+
   //Rico evento change
   const handleChange = e => {
+    var index;
+    var sTexto;
+    if (e.target.name === "id_producto") {
+      const arrayCopia = producto_select.slice();
+      index = arrayCopia.map(elemento => elemento.id_producto).indexOf(e.target.value);
+      sTexto = arrayCopia[index].nombre;
+      setocargaDet({...ocargaDet, [e.target.name]: e.target.value, descripcion:sTexto});
+      return;
+    }
+
     //Para todos los demas casos ;)
     setocargaDet({...ocargaDet, [e.target.name]: e.target.value.toUpperCase()});
     //ocargaDet.cantidad = ocargaDet.peso_ticket_tras - ocargaDet.cantidad;
@@ -150,11 +224,12 @@ export default function OCargaFormTraslado() {
                 ticket_tras:data.ticket_tras, //datos adicionales
                 peso_ticket_tras:data.peso_ticket_tras, //datos adicionales
                 sacos_ticket_tras:data.sacos_ticket_tras, //datos adicionales
+                tr_placacargado:data.tr_placacargado, //datos adicionales
 
                 registrado:data.registrado
 
                 });
-    //console.log(data);
+    //Guardamos cantidad y sacos_real del transbordo, para acumular TN y actualizar datos
 
     setEditando(true);
   };
@@ -188,62 +263,103 @@ export default function OCargaFormTraslado() {
                                       //alignItems="center"
                                       justifyContent="center"
                             >
-                                <Typography fontSize={15} marginTop="0.5rem" 
+                                <Typography marginTop="0.5rem" 
                                 style={{color:'#F39C12'}}
+                                variant="h5"
+                                align="center"
                                 >
-                                DATOS DE TRASLADO
+                                DESCARGUIO
                                 </Typography>
 
-                                <Typography marginTop="0.5rem" variant="subtitle" 
-                                style={{color:'#4F8FE1'}}
-                                sx={{mt:0}}
+                                <Box sx={{ minWidth: 120, mt:2 }}
+                                   //sx={{mt:-3}}
                                 >
-                                {ocargaDet.descripcion}
-                                </Typography>
+                                    <FormControl fullWidth>
+                                      <InputLabel id="demo-simple-select-label" 
+                                                  inputProps={{ style:{color:'white'} }}
+                                                  InputLabelProps={{ style:{color:'white'} }}
+                                                  sx={{mt:1, color:'#5DADE2'}}
+                                      >PRODUCTO</InputLabel>
+                                      <Select
+                                        labelId="producto"
+                                        id={ocargaDet.id_producto}
+                                        value={ocargaDet.id_producto}
+                                        name="id_producto"
+                                        //size="small"
+                                        sx={{display:'block',
+                                        margin:'.5rem 0' , color:"white"}}
+                                        label="Producto Lote"
+                                        onChange={handleChange}
+                                        inputProps={{ style:{color:'white'} }}
+                                        InputLabelProps={{ style:{color:'white'} }}
+                                      >
+                                        {   
+                                            producto_select.map(elemento => (
+                                            <MenuItem   key={elemento.id_producto} 
+                                                        value={elemento.id_producto}
+                                            >
+                                              {elemento.nombre}
+                                            </MenuItem>)) 
+                                        }
+                                      </Select>
+                                    </FormControl>
+                                </Box>
 
-                                <Typography marginTop="0.5rem" variant="subtitle" 
-                                style={{color:'#4F8FE1'}}
-                                sx={{mt:0}}
-                                >
-                                UNIDAD : {ocargaDet.unidad_medida}
-                                </Typography>
+                                <Grid container spacing={2} > 
+                                  <Grid item xs={12}>
+                                    <TextField variant="outlined" 
+                                          //size="small"
+                                          label="OBSERVACIONES"
+                                          //sx={{mt:2}}
+                                          fullWidth
+                                          name="e_observacion"
+                                          inputRef={descTextFieldRef}
+                                          value={ocargaDet.e_observacion}
+                                          onChange={handleChange}
+                                          //inputProps={{ style:{color:'white'} }}
+                                          inputProps={{ style:{color:'white',textAlign: 'center', fontSize:'14px'} }}
+                                          InputLabelProps={{ style:{color:'white'} }}
+                                    />
+                                  </Grid>
+                                </Grid>
 
-                               <TextField variant="outlined" 
-                                      label="TICK TRASLADO"
-                                      //sx={{mt:2}}
-                                      sx={{ mt:2,
-                                        typography: (theme) => ({
-                                          fontSize: 5,
-                                        }),
-                                      }}                                      
-                                      fullWidth
-                                      name="ticket_tras"
-                                      value={ocargaDet.ticket_tras}
-                                      onChange={handleChange}
-                                      //inputProps={{ style:{color:'white'} }}
-                                      inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                      InputLabelProps={{ style:{color:'white'} }}
-                                />
 
-                                <TextField variant="outlined" 
-                                      label="TN."
-                                      fullWidth
-                                      sx={{mt:0}}
-                                      name="peso_ticket_tras"
-                                      value={ocargaDet.peso_ticket_tras}
-                                      onChange={handleEPesoChange}
-                                      //inputProps={{ style:{color:'white'} }}
-                                      inputProps={{ style:{color:'white',textAlign: 'center'} }}
-                                      InputLabelProps={{ style:{color:'white'} }}
-                                />
-
-                                <TextField variant="outlined" 
+                               <TextField variant="filled" 
                                       label="SACOS"
                                       fullWidth
                                       sx={{mt:0}}
-                                      name="sacos_ticket_tras"
-                                      value={ocargaDet.sacos_ticket_tras}
-                                      onChange={handleChange}
+                                      name="sacosDescarguio"
+                                      inputRef={segundoTextFieldRef}
+                                      value={sacosDescarguio}
+                                      onChange={handleSacosDescarguioChange}
+                                      onKeyDown={(event) => handleKeyDown(event, primeroTextFieldRef ,terceroTextFieldRef)}
+                                      //inputProps={{ style:{color:'white'} }}
+                                      inputProps={{ style:{color:'white',textAlign: 'center'} }}
+                                      InputLabelProps={{ style:{color:'white'} }}
+                                />
+
+                                <TextField variant="filled" 
+                                      fullWidth
+                                      sx={{mt:0}}
+                                      name="kgSaco"
+                                      value={kgSaco}
+                                      inputRef={terceroTextFieldRef}
+                                      onChange={handleKgSacoChange}
+                                      onKeyDown={(event) => handleKeyDown(event, segundoTextFieldRef,cuartoTextFieldRef)}
+                                      //inputProps={{ style:{color:'white'} }}
+                                      inputProps={{ style:{color:'white',textAlign: 'center'} }}
+                                      InputLabelProps={{ style:{color:'white'} }}
+                                />
+
+                                <TextField variant="filled" 
+                                      label="TN.APROX/BLS"
+                                      fullWidth
+                                      sx={{mt:0}}
+                                      name="tnDescarguio"
+                                      value={tnDescarguio}
+                                      inputRef={cuartoTextFieldRef}
+                                      onChange={handleTnDescarguioChange}
+                                      onKeyDown={(event) => handleKeyDown(event, terceroTextFieldRef,cuartoTextFieldRef)}
                                       //inputProps={{ style:{color:'white'} }}
                                       inputProps={{ style:{color:'white',textAlign: 'center'} }}
                                       InputLabelProps={{ style:{color:'white'} }}
@@ -253,9 +369,8 @@ export default function OCargaFormTraslado() {
                                     color='primary' 
                                     sx={{mt:1}}
                                     type='submit'
-                                    disabled={!ocargaDet.ticket_tras || 
-                                              !ocargaDet.peso_ticket_tras ||
-                                              !ocargaDet.sacos_ticket_tras || !ePeso
+                                    disabled={!ocargaDet.id_producto 
+                                              //|| !ocargaDet.cantidad
                                               }
                                     >
                                     { cargando ? (
@@ -266,7 +381,7 @@ export default function OCargaFormTraslado() {
 
                                   <Button variant='contained' 
                                     color='success' 
-                                    sx={{mt:1}}
+                                    sx={{mt:0.2}}
                                     onClick={ ()=>{
                                       navigate(-1, { replace: true });
                                       //window.location.reload();

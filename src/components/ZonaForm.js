@@ -124,7 +124,7 @@ export default function ZonaForm() {
                                           event.preventDefault();
                                       }
                                   }}
-                                  inputRef={firstTextFieldRef}                                   
+                                  inputRef={firstTextFieldRef}
                                   inputProps={{ inputMode: 'numeric',
                                                 style:{color:'white'} }}
                                   InputLabelProps={{ style:{color:'white'} }}

@@ -17,6 +17,8 @@ import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import '../App.css';
 import 'styled-components';
 
+import { useAuth0 } from '@auth0/auth0-react'; //new para cargar permisos luego de verificar registro en bd
+
 export default function ProductoList() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
@@ -54,6 +56,13 @@ export default function ProductoList() {
   const [registrosdet,setRegistrosdet] = useState([]);
   const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado
 
+  //Permisos Zona Entrega Nivel 01 - Lista 
+  const [permisosComando, setPermisosComando] = useState([]); //MenuComandos
+  const {user, isAuthenticated } = useAuth0();
+  const [pZonaEntrega0701, setPZonaEntrega0701] = useState(false); //Nuevo (Casi libre)
+  const [pZonaEntrega0702, setPZonaEntrega0702] = useState(false); //Modificar (Restringido)
+  const [pZonaEntrega0703, setPZonaEntrega0703] = useState(false); //Eliminar (Casi Nunca solo el administrador)
+
   const handleRowSelected = useCallback(state => {
 		setSelectedRows(state.selectedRows);
 	}, []);
@@ -74,20 +83,37 @@ export default function ProductoList() {
 
 		return (
       <>
+      { pZonaEntrega0703 ? 
+        (      
 			<Button key="delete" onClick={handleDelete} >
         ELIMINAR
         <DeleteIcon></DeleteIcon>
 			</Button>
+        ):
+        (
+          <span></span>
+        )
+      }
+
+      { pZonaEntrega0702 ? 
+        (      
 			<Button key="modificar" onClick={handleUpdate} >
         MODIFICAR
       <UpdateIcon/>
 			</Button>
+        ):
+        (
+          <span></span>
+        )
+      }
 
       </>
 		);
 	}, [registrosdet, selectedRows, toggleCleared]);
 
-  const actions = (
+  let actions;
+  if (pZonaEntrega0701) {
+    actions = (
     	<IconButton color="primary" 
         onClick = {()=> {
                       navigate(`/zonadet/new`);
@@ -96,7 +122,10 @@ export default function ProductoList() {
       >
     		<Add />
     	</IconButton>
-  );
+      );
+  } else {
+    actions = null; // Opcionalmente, puedes asignar null u otro valor cuando la condición no se cumple
+  }
 
   //////////////////////////////////////////////////////////
   //const [registrosdet,setRegistrosdet] = useState([]);
@@ -179,10 +208,48 @@ export default function ProductoList() {
     setRegistrosdet(resultadosBusqueda);
 }
 
+const cargaPermisosMenuComando = async(idMenu)=>{
+  //Realiza la consulta a la API de permisos
+  fetch(`https://alsa-backend-js-production.up.railway.app/seguridad/${user.email}/${idMenu}`, {
+    method: 'GET'
+  })
+  .then(response => response.json())
+  .then(permisosData => {
+    // Guarda los permisos en el estado
+    setPermisosComando(permisosData);
+    console.log(permisosComando);
+    let tienePermiso;
+    // Verifica si existe el permiso de acceso 'Correntistas'
+    tienePermiso = permisosData.some(permiso => permiso.id_comando === '07-01'); //Nuevo
+    if (tienePermiso) {
+      setPZonaEntrega0701(true);
+    }
+    tienePermiso = permisosData.some(permiso => permiso.id_comando === '07-02'); //Modificar
+    if (tienePermiso) {
+      setPZonaEntrega0702(true);
+    }
+    tienePermiso = permisosData.some(permiso => permiso.id_comando === '07-03'); //Eliminar
+    if (tienePermiso) {
+      setPZonaEntrega0703(true);
+    }
+    //setUpdateTrigger(Math.random());//experimento
+  })
+  .catch(error => {
+    console.log('Error al obtener los permisos:', error);
+  });
+}
+
 //////////////////////////////////////////////////////////
   useEffect( ()=> {
       cargaRegistro();
-  },[updateTrigger])
+      //NEW codigo para autenticacion y permisos de BD
+      if (isAuthenticated && user && user.email) {
+        // cargar permisos de sistema
+        cargaPermisosMenuComando('07'); //Alimentamos el useState permisosComando
+        //console.log(permisosComando);
+      }
+
+  },[updateTrigger, isAuthenticated, user])
   //////////////////////////////////////////////////////////
 
  return (

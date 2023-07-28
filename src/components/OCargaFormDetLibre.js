@@ -9,232 +9,9 @@ import Datatable, {createTheme} from 'react-data-table-component';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 
-export default function OCargaFormDet() {
+export default function OCargaFormDetLibre() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //Seccion Modal
-  createTheme('solarized', {
-    text: {
-      //primary: '#268bd2',
-      primary: '#ffffff',
-      secondary: '#2aa198',
-    },
-    background: {
-      //default: '#002b36',
-      default: '#1e272e'
-    },
-    context: {
-      background: '#cb4b16',
-      //background: '#1e272e',
-      text: '#FFFFFF',
-    },
-    divider: {
-      default: '#073642',
-    },
-    action: {
-      button: 'rgba(0,0,0,.54)',
-      hover: 'rgba(0,0,0,.08)',
-      disabled: 'rgba(0,0,0,.12)',
-    },
-  }, 'dark');
-
-  const [abierto,setAbierto] = useState(false);
-  const modalStyles={
-    position:'absolute',
-    top:'0%',
-    left:'0%',
-    background:'gray',
-    border:'2px solid #000',
-    padding:'16px 32px 24px',
-    width:'100',
-    minHeight: '50px'
-    //transform:'translate(0%,0%)'
-  }
-  const tablaStyles = {
-    rows: {
-        style: {
-            minHeight: '20px', // override the row height
-        },
-    },
-    headCells: {
-        style: {
-            paddingLeft: '8px', // override the cell padding for head cells
-            paddingRight: '8px',
-        },
-    },
-    cells: {
-        style: {
-            paddingLeft: '8px', // override the cell padding for data cells
-            paddingRight: '8px',
-        },
-    },
-};  
-  const abrirCerrarModal = ()=>{
-    setAbierto(!abierto);
-  }
-  const actualizaValorFiltro = e => {
-    //setValorBusqueda(e.target.value);
-    filtrar(e.target.value);
-  }
-  const filtrar=(strBusca)=>{
-      var resultadosBusqueda = [];
-      
-      resultadosBusqueda = tabladet.filter((elemento) => {
-        if (elemento.ref_razon_social.toString().toLowerCase().includes(strBusca.toLowerCase())
-         || elemento.pedido.toString().toLowerCase().includes(strBusca.toLowerCase())
-         || elemento.nombre.toString().toLowerCase().includes(strBusca.toLowerCase())
-          ){
-              return elemento;
-          }
-      });
-      setRegistrosdet(resultadosBusqueda);
-  }
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [toggleCleared, setToggleCleared] = useState(false);
-  const [registrosdet,setRegistrosdet] = useState([]); //Para vista principal
-  const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado
-  const columnas = [
-    { name:'PEDIDO', 
-      selector:row => row.pedido,
-      sortable: true
-    },
-    { name:'RAZON_SOCIAL', 
-      selector:row => row.ref_razon_social,
-      sortable: true
-    },
-    { name:'PRODUCTO', 
-      selector:row => row.nombre,
-      sortable: true
-    },
-    { name:'ENTREGA', 
-      selector:row => row.zona_entrega,
-      sortable: true
-    },
-    { name:'FECHA', 
-      selector:row => row.fecha,
-      sortable: true,
-      key:true
-    },
-    { name:'CARGA', 
-      selector:row => row.carga,
-      sortable: true,
-      key:true
-    },
-    { name:'PLACA VACIO', 
-      selector:row => row.tr_placa,
-      sortable: true,
-      key:true
-    },
-    { name:'SALDO', 
-      selector:row => row.saldo,
-      sortable: true,
-      key:true
-    },
-    { name:'UNIDAD', 
-      selector:row => row.unidad_medida,
-      sortable: true,
-      key:true
-    }
-  ];
-
-  const handleRowSelected = useCallback(state => {
-		setSelectedRows(state.selectedRows);
-	}, []);
-  
-  const contextActions = useMemo(() => {
-    //console.log("asaaa");
-		const handleSeleccionado = () => {
-			var strPedido;
-      var strIdProducto;
-      var strProducto;
-      var strIdZonaEntrega;
-      var strZonaEntrega;
-      var strDocumentoId;
-      var strRazonSocial;
-      var strCantidad;
-      var strPlacaVacio;
-      var strUnidadMedida;
-      var strTrFechaCarga;
-
-      strPedido = selectedRows.map(r => r.pedido);
-      strIdProducto = selectedRows.map(r => r.id_producto);
-      strProducto = selectedRows.map(r => r.nombre);
-      strIdZonaEntrega = selectedRows.map(r => r.id_zona_entrega);
-      strZonaEntrega = selectedRows.map(r => r.zona_entrega);
-      strDocumentoId = selectedRows.map(r => r.ref_documento_id);
-      strRazonSocial = selectedRows.map(r => r.ref_razon_social);
-      strCantidad = selectedRows.map(r => r.saldo);
-      strPlacaVacio = selectedRows.map(r => r.tr_placa);
-      strUnidadMedida = selectedRows.map(r => r.unidad_medida); //new
-      strTrFechaCarga = selectedRows.map(r => r.carga); //new
-
-      //console.log(strPedido[0]);
-      //ojo: cuando llega la variable ,desde un filtro en automatico, llega como array unitario, pero array
-      //y si lo enviamos al backend en ese formato, las funciones de tratamiento de texto no funcionaran, danger
-      ocargaDet.pedido = strPedido[0];
-      ocargaDet.id_producto = strIdProducto[0];
-      ocargaDet.descripcion = strProducto[0];
-      ocargaDet.id_zona_entrega = strIdZonaEntrega[0];
-      ocargaDet.zona_entrega = strZonaEntrega[0];
-      ocargaDet.ref_documento_id = strDocumentoId[0];
-      ocargaDet.ref_razon_social= strRazonSocial[0];
-      ocargaDet.saldo = strCantidad[0]; //referencial para avisar y no sobrepasar monto
-      ocargaDet.cantidad = strCantidad[0];
-      ocargaDet.tr_placa = strPlacaVacio[0];
-
-      ocargaDet.unidad_medida = strUnidadMedida[0]; //new
-      ocargaDet.carga = strTrFechaCarga[0]; //new
-
-      setToggleCleared(!toggleCleared);
-      //Cerrar Modal
-      setAbierto(false);
-		};
-
-
-		return (
-      <>
-			<Button key="seleccionado" onClick={handleSeleccionado} >
-       ACEPTAR <EditRoundedIcon/>
-			</Button>
-			
-      </>
-		);
-	}, [registrosdet, selectedRows, toggleCleared]);
-
-  const cargaArregloPopUp = async () => {
-    let strFecha="";
-    //La data, corresponde al mes de login
-    //le cargaremos fecha actual si parametro no existe
-    strFecha=params.fecha_proceso;
-    console.log(strFecha);
-    if (params.fecha_proceso===null){
-      let nPos=0;
-      const fecha = new Date(); //ok fecha y hora actual
-      strFecha = fecha.toISOString(); //formato texto
-      nPos = strFecha.indexOf('T');
-      strFecha = strFecha.substr(0,nPos);
-    }
-    
-    //PENDIENTES 
-    //const response = await fetch(`${back_host}/ventadetpendientes/${strFecha}`);
-    var response;
-    if (params.tipo==="P"){
-      response = await fetch(`${back_host}/ventadetpendientes/${strFecha}`);  
-    }else{
-      //Areglar solo deben ir parametros ano,numero ... debe mostrar lo pendiente por cliente y producto en caso quede saldo por ejecutar
-      console.log(`${back_host}/ocargadetpendientesejec/${params.ano}/${params.numero}`);
-      response = await fetch(`${back_host}/ocargadetpendientesejec/${params.ano}/${params.numero}`);
-    }
-    const data = await response.json();
-    setRegistrosdet(data);
-    setTabladet(data); //Copia para tratamiento de filtrado
-    console.log(ocargaDet);
-  }
-
-  //Fin Seccion Modal
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   //experimento
@@ -297,17 +74,17 @@ export default function OCargaFormDet() {
       ref_razon_social:'',  //ventas
       id_producto:'',   //ventas
       descripcion:'',   //ventas
-      unidad_medida:'',   //ventas 
-      saldo:'',      //solo referencial
+      unidad_medida:'',   //ventas NEWWWWW
+      saldo:'',      //solo referencial NEW
       cantidad:'',      //ventas
       operacion:'',     //ocarga-fase01
       tr_placa:'',      //ventas
       tr_placacargado:'', //ocarga-fase01
-      carga:'',      //tr_fecha_carga(proyectado) solo referencial, para verificar mostrar alerta en caso > fecha_carga
+      carga:'',      //tr_fecha_carga(proyectado) solo referencial NEW, para verificar mostrar alerta en caso > fecha_carga
+
       id_zona_entrega:'', //ventas referencial, no visible
       zona_entrega:'',    //ventas referencial, no visible
-
-      tipo:'',    //P=Programacion  E=Ejecucion  NEWWWW
+      
       registrado:'1'
   })
 
@@ -315,14 +92,6 @@ export default function OCargaFormDet() {
     e.preventDefault();
     setCargando(true);
     
-    //cargar el parametro antes de la transaccion con BD postgres: params.tipo
-    
-    ocargaDet.tipo = params.tipo;
-    //setocargaDet({...ocargaDet, tipo: params.tipo});
-    //setocargaDet(prevState => ({ ...prevState, tipo: params.tipo }));
-    console.log("params tipo: ",params.tipo);
-    console.log("tipo: ",ocargaDet.tipo);
-
     //Cambiooo para controlar Edicion
     if (editando){
       if (params.modo === "clonar") {
@@ -391,7 +160,6 @@ export default function OCargaFormDet() {
         id_punto_venta:'1001',  
         ano:params.ano,
         numero:params.numero,
-        //tipo:params.tipo,
         registrado:'1'
         });
     }
@@ -432,7 +200,6 @@ export default function OCargaFormDet() {
 
   //funcion para mostrar data de formulario, modo edicion
   const mostrarOCarga = async (ano,numero,item) => {
-    console.log(`${back_host}/ocargadet/${ano}/${numero}/${item}`);
     const res = await fetch(`${back_host}/ocargadet/${ano}/${numero}/${item}`);
     const data = await res.json();
     //Actualiza datos para enlace con controles, al momento de modo editar
@@ -461,11 +228,10 @@ export default function OCargaFormDet() {
                 carga:data.carga, //new solo MUestra tr_fecha_carga
                 id_zona_entrega:data.id_zona_entrega,
                 zona_entrega:data.zona_entrega,
-                tipo:data.tipo,
-                
+
                 registrado:data.registrado
                 });
-    console.log(data);
+    //console.log(data);
     
     //console.log(params.modo);
     if (params.modo === "clonar"){
@@ -478,76 +244,9 @@ export default function OCargaFormDet() {
     setEditando(true);
   };
 
-  ///Body para Modal de Busqueda Incremental de Pedidos
-  const body=(
-    <div>
-        <div> 
-          <TextField fullWidth variant="outlined" color="warning"
-                    autofocus
-                    label="FILTRAR"
-                    sx={{display:'block',
-                          margin:'.5rem 0'}}
-                    name="busqueda"
-                    placeholder='Cliente   Producto  Pedido'
-                    onChange={actualizaValorFiltro}
-                    inputProps={{ style:{color:'white'} }}
-                    InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <FindIcon />
-                          </InputAdornment>
-                        ),
-                        style:{color:'white'} 
-                    }}
-          />
-        </div>
-        
-        <Datatable
-          title="Pedidos Pendientes"
-          theme="solarized"
-          columns={columnas}
-          data={registrosdet}
-          pagination={true}
-          paginationPerPage={8} // Número de filas por página
-
-          selectableRows
-          contextActions={contextActions}
-          //actions={actions}
-          onSelectedRowsChange={handleRowSelected}
-          clearSelectedRows={toggleCleared}
-
-          selectableRowsComponent={Checkbox} // Pass the function only
-          sortIcon={<ArrowDownward />}  
-          customStyles={tablaStyles}
-          >
-        </Datatable>
-        <br />
-
-        <div>
-            <Button color="warning"
-              onClick = { () => {
-                setAbierto(false);
-                }
-              }
-            >Cerrar
-            </Button>
-        </div>
-    </div>
-  )
-
   return (
     <> 
 <div class="p-3 mb-2 bg-dark text-white">
-
-<div>
-  <Modal
-    open={abierto}
-    onClose={abrirCerrarModal}
-    style={modalStyles}
-    >
-    {body}
-  </Modal>
-</div>
 
 <Grid container spacing={2}
           direction="column"

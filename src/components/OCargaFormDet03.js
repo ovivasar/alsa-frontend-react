@@ -8,7 +8,11 @@ import InputAdornment from '@mui/material/InputAdornment';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 import DeleteIcon from '@mui/icons-material/DeleteForeverRounded';
-import swal from 'sweetalert';
+//import swal from 'sweetalert';
+
+import LineWeightIcon from '@mui/icons-material/LineWeight';
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import ViewCompactIcon from '@mui/icons-material/ViewCompact';
 
 export default function OCargaFormDet() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
@@ -88,33 +92,12 @@ export default function OCargaFormDet() {
     //actualizamos datos del modal, para pantallita
     setocargaDetModal({...ocargaDetModal, [e.target.name]: e.target.value.toUpperCase()});
 
-    //ACTUALIZAMOS CAMPO ocargaDet.e_monto del modal
-    /*if ([e.target.name]=="e_costo"){
-      setocargaDetModal({...ocargaDetModal, e_costo: e.target.value});
-      setocargaDetModal({...ocargaDetModal, e_monto: ocargaDetModal.e_peso*(e.target.value)});
-      //setVarCosto(e.target.value); //almacenamos copia
-    }else{
-      if ([e.target.name]=="e_peso"){
-        //actualizamos valor e_peso
-        console.log([e.target.name], e.target.value);
-        setocargaDetModal({...ocargaDetModal, e_peso: e.target.value});
-        //actualizamos valor e_monto, pero con valor actual(peso rico target) * valor ant(e_costo)
-        console.log(ocargaDetModal);
-        setocargaDetModal({...ocargaDetModal, e_monto: e.target.value*ocargaDetModal.e_costo});
-      }
-    }*/
-
     //actualizamos datos del formulario, para pantalla general
     setocargaDet({...ocargaDet, [e.target.name+numGuia]: e.target.value.toUpperCase()});
   }
 
-  const cargaArregloPopUp = async () => {
-    let strFecha="";
-    //La data, corresponde al mes de login
-    
-  }
-  
-  ///Body para Modal de Busqueda Incremental de Pedidos
+ 
+  ///Body para Modal 
   const body=(
     <div>
       <Card sx={{mt:-8}}
@@ -260,7 +243,7 @@ export default function OCargaFormDet() {
                   onClick = { () => {
                     setAbierto(false);
                     //actualizar las variables, porque sino hay change, no pasaran
-                    if (numGuia=="01") {
+                    if (numGuia==="01") {
                       ocargaDet.guia01 = ocargaDetModal.guia;
                       ocargaDet.guia_traslado01 = ocargaDetModal.guia_traslado;
                       console.log("ocargaDetModal.guia_sacos : ",ocargaDetModal.guia_sacos);
@@ -268,14 +251,14 @@ export default function OCargaFormDet() {
                       ocargaDet.e_peso01 = ocargaDetModal.e_peso;
                       ocargaDet.e_monto01 = ocargaDetModal.e_monto;
                     }
-                    if (numGuia=="02") {
+                    if (numGuia==="02") {
                       ocargaDet.guia02 = ocargaDetModal.guia;
                       ocargaDet.guia_traslado02 = ocargaDetModal.guia_traslado;
                       ocargaDet.guia_sacos02 = ocargaDetModal.guia_sacos;
                       ocargaDet.e_peso02 = ocargaDetModal.e_peso;
                       ocargaDet.e_monto02 = ocargaDetModal.e_monto;
                     }
-                    if (numGuia=="03") {
+                    if (numGuia==="03") {
                       ocargaDet.guia03 = ocargaDetModal.guia;
                       ocargaDet.guia_traslado03 = ocargaDetModal.guia_traslado;
                       ocargaDet.guia_sacos03 = ocargaDetModal.guia_sacos;
@@ -337,16 +320,11 @@ export default function OCargaFormDet() {
   
   ////////////////////////////////////////////////////////////////////////////////////////
   //Select(Combos) para llenar, desde tabla
-  const [zonaentrega_select,setZonaEntregaSelect] = useState([]);
-  //const [numeroOrden, setnumeroOrden] = useState(""); //Para modificar y/o blanquear en formulario
-
   const [cargando,setCargando] = useState(false);
   const [editando,setEditando] = useState(false);
   
   const navigate = useNavigate();
   const params = useParams();
-
-  //const fecha_actual = new Date();
 
   //Para guardado de datos antes de envio 
   //Falta aumentar la fecha desde el parametro
@@ -400,28 +378,6 @@ export default function OCargaFormDet() {
       e_peso03:'',
       e_monto03:''
   })
-
-  const confirmaEliminacionDet = (cod,serie,num,elem,item)=>{
-    swal({
-      title:"Eliminar Detalle de Venta",
-      text:"Seguro ?",
-      icon:"warning",
-      timer:"3000",
-      buttons:["No","Si"]
-    }).then(respuesta=>{
-        if (respuesta){
-          eliminarVentaDetalleItem(cod,serie,num,elem,item);
-            swal({
-            text:"Detalle de venta eliminado con exito",
-            icon:"success",
-            timer:"2000"
-          });
-      }
-    })
-  }
-  const eliminarVentaDetalleItem = async (cod,serie,num,elem,item) => {
-    //console.log(data);
-  }
 
   const handleSubmit = async(e) => {
     e.preventDefault();
@@ -568,14 +524,14 @@ export default function OCargaFormDet() {
                                 ocargaDetModal.guia = ocargaDet.guia01;
                                 ocargaDetModal.guia_traslado = ocargaDet.guia_traslado01;
 
-                                if (ocargaDet.guia_sacos01==null || ocargaDet.guia_sacos01==0){
+                                if (ocargaDet.guia_sacos01===null || ocargaDet.guia_sacos01===0){
                                   ocargaDetModal.guia_sacos = ocargaDet.sacos_real-ocargaDet.guia_sacos02-ocargaDet.guia_sacos03;
                                 }else{
                                   ocargaDetModal.guia_sacos = ocargaDet.guia_sacos01;
                                 }
                                 setGuiaSacos(ocargaDetModal.guia_sacos);
 
-                                if (ocargaDet.e_peso01==null || ocargaDet.e_peso01==0){
+                                if (ocargaDet.e_peso01===null || ocargaDet.e_peso01===0){
                                   ocargaDetModal.e_peso = ((ocargaDet.peso_ticket-ocargaDet.e_peso02-ocargaDet.e_peso03)*ocargaDet.sacos_real/ocargaDet.sacos_ticket).toFixed(3);    
                                 }else{
                                   ocargaDetModal.e_peso = ocargaDet.e_peso01;
@@ -583,7 +539,6 @@ export default function OCargaFormDet() {
                                 setEPeso(ocargaDetModal.e_peso);
 
                                 ocargaDetModal.e_monto = ocargaDet.e_monto01;
-                                cargaArregloPopUp();//Info del modal
                                 setAbierto(true);
                                 }
                               }
@@ -662,14 +617,14 @@ export default function OCargaFormDet() {
                                 
                                 //ocargaDetModal.guia_sacos = ocargaDet.guia_sacos02;
                                 //ocargaDetModal.e_peso = ocargaDet.e_peso02;
-                                if (ocargaDet.guia_sacos02==null || ocargaDet.guia_sacos02==0){
+                                if (ocargaDet.guia_sacos02===null || ocargaDet.guia_sacos02===0){
                                   ocargaDetModal.guia_sacos = ocargaDet.sacos_real-ocargaDet.guia_sacos01-ocargaDet.guia_sacos03;
                                 }else{
                                   ocargaDetModal.guia_sacos = ocargaDet.guia_sacos02;
                                 }
                                 setGuiaSacos(ocargaDetModal.guia_sacos);
 
-                                if (ocargaDet.e_peso02==null || ocargaDet.e_peso02==0){
+                                if (ocargaDet.e_peso02===null || ocargaDet.e_peso02===0){
                                   ocargaDetModal.e_peso = (ocargaDet.peso_ticket-ocargaDet.e_peso01-ocargaDet.e_peso03).toFixed(3);    
                                 }else{
                                   ocargaDetModal.e_peso = ocargaDet.e_peso02;
@@ -677,7 +632,6 @@ export default function OCargaFormDet() {
                                 setEPeso(ocargaDetModal.e_peso);
 
                                 ocargaDetModal.e_monto = ocargaDet.e_monto02;
-                                cargaArregloPopUp();//Info del modal
                                 setAbierto(true);
                                 }
                               }
@@ -756,14 +710,14 @@ export default function OCargaFormDet() {
                                 
                                 //ocargaDetModal.guia_sacos = ocargaDet.guia_sacos03
                                 //ocargaDetModal.e_peso = ocargaDet.e_peso03
-                                if (ocargaDet.guia_sacos03==null){
+                                if (ocargaDet.guia_sacos03===null){
                                   ocargaDetModal.guia_sacos = ocargaDet.sacos_real-ocargaDet.guia_sacos01-ocargaDet.guia_sacos02;
                                 }else{
                                   ocargaDetModal.guia_sacos = ocargaDet.guia_sacos03;
                                 }
                                 setGuiaSacos(ocargaDetModal.guia_sacos);
 
-                                if (ocargaDet.e_peso03==null){
+                                if (ocargaDet.e_peso03===null){
                                   ocargaDetModal.e_peso = ocargaDet.peso_ticket-ocargaDet.e_peso01-ocargaDet.e_peso02;    
                                 }else{
                                   ocargaDetModal.e_peso = ocargaDet.e_peso03;
@@ -771,7 +725,6 @@ export default function OCargaFormDet() {
                                 setEPeso(ocargaDetModal.e_peso);
 
                                 ocargaDetModal.e_monto = ocargaDet.e_monto03
-                                cargaArregloPopUp();//Info del modal
                                 setAbierto(true);
                                 }
                               }
@@ -985,26 +938,63 @@ export default function OCargaFormDet() {
                                 ESTIBADORES : {ocargaDet.e_estibadores}
                                 </Typography>
 
-                                <Typography marginTop="0.5rem" variant="h5" 
-                                style={{color:'#4F8FE1'}}
-                                sx={{mt:0}}
-                                >
-                                TICKET : {ocargaDet.ticket}
-                                </Typography>
 
-                                <Typography marginTop="0.5rem" variant="h5" 
-                                style={{color:'#4F8FE1'}}
-                                sx={{mt:0}}
-                                >
-                                TN. TICKET : {ocargaDet.peso_ticket}
-                                </Typography>
-
-                                <Typography marginTop="0.5rem" variant="h5" 
-                                style={{color:'#4F8FE1'}}
-                                sx={{mt:0}}
-                                >
-                                SACOS TICKET : {ocargaDet.sacos_ticket}
-                                </Typography>
+                                <TextField variant="outlined" 
+                                    label="TICKET"
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          <BookmarkBorderIcon />
+                                        </InputAdornment>
+                                      ),
+                                    }}                                          
+                                    sx={{display:'block',margin:'.5rem 0'}}
+                                    name="ticket"
+                                    size='small'
+                                    fullWidth
+                                    value={ocargaDet.ticket}
+                                    onChange={handleChange}
+                                    inputProps={{ style:{color:'white',textAlign: 'center'} }}
+                                    InputLabelProps={{ style:{color:'white'} }}
+                                />
+                                <TextField variant="outlined" 
+                                    label="TN."
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          <LineWeightIcon />
+                                        </InputAdornment>
+                                      ),
+                                    }}                                          
+                                    sx={{display:'block',margin:'.5rem 0'}}
+                                    name="peso_ticket"
+                                    value={ocargaDet.peso_ticket}
+                                    size='small'
+                                    fullWidth
+                                    onChange={handleChange}
+                                    inputProps={{ style:{color:'white', textAlign: 'center'} }}
+                                    InputLabelProps={{ style:{color:'white'} }}
+                                />
+                                <TextField variant="outlined" 
+                                    label="SACOS"
+                                    //type="number"
+                                    step="1"
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          <ViewCompactIcon />
+                                        </InputAdornment>
+                                      ),
+                                    }}                                          
+                                    sx={{display:'block',margin:'.5rem 0'}}
+                                    name="sacos_ticket"
+                                    value={ocargaDet.sacos_ticket}
+                                    size='small'
+                                    fullWidth
+                                    onChange={handleChange}
+                                    inputProps={{ style:{color:'white', textAlign: 'center'} }}
+                                    InputLabelProps={{ style:{color:'white'} }}
+                                />
 
                                 {body01}
                                 {body02}
@@ -1015,8 +1005,7 @@ export default function OCargaFormDet() {
                                     sx={{mt:1}}
                                     type='submit'
                                     disabled={!ocargaDet.fecha2 || 
-                                              !ocargaDet.operacion ||
-                                              !ocargaDet.tr_placacargado
+                                              !ocargaDet.operacion
                                               }
                                     >
                                     { cargando ? (

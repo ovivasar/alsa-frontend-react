@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState, useMemo, useCallback } from "react"
-import { Grid, Button } from "@mui/material";
+import { Grid, Button,useMediaQuery } from "@mui/material";
 import { useNavigate,useParams } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import FindIcon from '@mui/icons-material/FindInPage';
@@ -20,8 +20,14 @@ import 'styled-components';
 import { utils, writeFile } from 'xlsx';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
+
+import { useAuth0 } from '@auth0/auth0-react'; //new para cargar permisos luego de verificar registro en bd
+import BotonExcelVentas from './BotonExcelVentas';
 
 export default function VentaList() {
+  //verificamos si es pantalla pequeña y arreglamos el grid de fechas
+  const isSmallScreen = useMediaQuery('(max-width: 600px)');
 
   createTheme('solarized', {
     text: {
@@ -68,6 +74,14 @@ export default function VentaList() {
   const [navegadorMovil, setNavegadorMovil] = useState(false);
   const [valorBusqueda, setValorBusqueda] = useState(""); //txt: rico filtrado
   const [valorVista, setValorVista] = useState("resumen");
+  const [permisosComando, setPermisosComando] = useState([]); //MenuComandos
+  const {user, isAuthenticated } = useAuth0();
+  
+  //Permisos Venta Nivel 01 - Lista Ventas
+  const [pVenta0101, setPVenta0101] = useState(false); //Nuevo (Casi libre)
+  const [pVenta0102, setPVenta0102] = useState(false); //Modificar (Restringido)
+  const [pVenta0103, setPVenta0103] = useState(false); //Anular (Restringido)
+  const [pVenta0104, setPVenta0104] = useState(false); //Eliminar (Casi Nunca solo el administrador)
 
   const handleRowSelected = useCallback(state => {
 		setSelectedRows(state.selectedRows);
@@ -126,40 +140,63 @@ export default function VentaList() {
       if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
         console.log("Estás usando un dispositivo móvil!!");
         navigate(`/ventamovil/${strCod}/${strSerie}/${strNum}/${strElem}/edit`);
-        //navigate(`/venta/${strCod}/${strSerie}/${strNum}/${strElem}/edit`);
       } else {
         console.log("No estás usando un móvil");
-        navigate(`/venta/${strCod}/${strSerie}/${strNum}/${strElem}/edit`);
-        //navigate(`/ventamovil/${strCod}/${strSerie}/${strNum}/${strElem}/edit`);
+        //navigate(`/venta/${strCod}/${strSerie}/${strNum}/${strElem}/edit`);
+        navigate(`/ventamovil/${strCod}/${strSerie}/${strNum}/${strElem}/edit`);
       }    
   	};
 
 		return (
       <>
+      { pVenta0104 ? 
+        (      
 			<Button key="delete" onClick={handleDelete} >
         ELIMINAR
         <DeleteIcon></DeleteIcon>
 			</Button>
+        ):
+        (
+          <span></span>
+        )
+      }
+
+      { pVenta0102 ? 
+        (      
 			<Button key="modificar" onClick={handleUpdate} >
-        MODIFICAR
+        VISUALIZAR
       <UpdateIcon/>
 			</Button>
+        ):
+        (
+          <span></span>
+        )
+      }
 
       </>
 		);
 	}, [registrosdet, selectedRows, toggleCleared]);
+  
+  ///////////////////////////////////////////////////////////////////////
+  let actions;
+  if (pVenta0101) {
+    actions = (
+      <IconButton color="primary" onClick={() => {
+        if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
+          navigate(`/ventamovil/new`);
+        } else {
+          //navigate(`/venta/new`);
+          navigate(`/ventamovil/new`);
+        }
+      }}>
+        <Add />
+      </IconButton>
+    );
+  } else {
+    actions = null; // Opcionalmente, puedes asignar null u otro valor cuando la condición no se cumple
+  }
+  ///////////////////////////////////////////////////////////////////////
 
-  const actions = (
-      <IconButton color="primary" 
-        onClick = {()=> {
-                      navigate(`/venta/new`);
-                  }
-                }
-      >
-    		<Add />
-    	</IconButton>
-    
-  );
 
   const cargaRegistro = async () => {
     var response;
@@ -200,15 +237,18 @@ export default function VentaList() {
   const columnas = [
     { name:'FECHA', 
       selector:row => row.comprobante_original_fecemi,
+      width: '100px',
       sortable: true
     },
     { name:'PEDIDO', 
       selector:row => row.pedido,
+      width: '110px',
       sortable: true
     },
     { name:'VENDEDOR', 
       selector:row => row.vendedor,
       sortable: true,
+      width: '80px',
       key:true
     },
     { name:'CLIENTE', 
@@ -217,22 +257,69 @@ export default function VentaList() {
     },
     { name:'ENTREGA', 
       selector:row => row.zona_entrega,
+      width: '100px',
       sortable: true
     },
     { name:'PRODUCTO', 
       selector:row => row.descripcion,
+      cell: (row) => (
+        <Tooltip title={row.descripcion ? row.descripcion : ''}>
+          <span>
+          {row.descripcion ? row.descripcion.substring(0, 50) + '...' : ''}
+          </span>
+        </Tooltip>
+              ),      
       sortable: true
     },
     { name:'PROYECTADO', 
       selector:row => row.fecha_entrega,
+      width: '100px',
       sortable: true
     },
     { name:'ESTADO', 
       selector:row => row.estado,
+      width: '100px',
       sortable: true
     },
+    { name:'RUC', 
+      selector:row => row.ref_documento_id,
+      width: '110px',
+      sortable: true
+    },
+    { name:'RAZON SOCIAL', 
+      selector:row => row.ref_razon_social,
+      width: '100px',
+      sortable: true
+    },
+    { name:'PRECIO', 
+      selector:row => row.precio_unitario,
+      width: '70px',
+      sortable: true
+    },
+    { name:'MONEDA', 
+      selector:row => row.moneda,
+      width: '70px',
+      sortable: true
+    },
+    { name:'%IGV', 
+      selector:row => row.porc_igv,
+      width: '80px',
+      sortable: true
+    },
+    { name:'CANT.', 
+      selector:row => row.cantidad,
+      width: '100px',
+      sortable: true
+    },
+    { name:'UND', 
+      selector:row => row.unidad_medida,
+      width: '80px',
+      sortable: true
+    },
+
     { name:'RUC TRANSP.', 
       selector:row => row.tr_ruc,
+      width: '110px',
       sortable: true
     },
     { name:'TRANSP.', 
@@ -319,6 +406,7 @@ export default function VentaList() {
         if (elemento.razon_social.toString().toLowerCase().includes(strBusca.toLowerCase())
          || elemento.vendedor.toString().toLowerCase().includes(strBusca.toLowerCase())
          || elemento.descripcion.toString().toLowerCase().includes(strBusca.toLowerCase())
+         || elemento.pedido.toString().toLowerCase().includes(strBusca.toLowerCase())
           ){
               return elemento;
           }
@@ -326,22 +414,69 @@ export default function VentaList() {
       setRegistrosdet(resultadosBusqueda);
   }
 
+  const cargaPermisosMenuComando = async(idMenu)=>{
+    //Realiza la consulta a la API de permisos
+    fetch(`https://alsa-backend-js-production.up.railway.app/seguridad/${user.email}/${idMenu}`, {
+      method: 'GET'
+    })
+    .then(response => response.json())
+    .then(permisosData => {
+      // Guarda los permisos en el estado
+      setPermisosComando(permisosData);
+      console.log(permisosComando);
+      let tienePermiso;
+      // Verifica si existe el permiso de acceso 'ventas'
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '01-01'); //Nuevo
+      if (tienePermiso) {
+        setPVenta0101(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '01-02'); //Modificar
+      if (tienePermiso) {
+        setPVenta0102(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '01-03'); //Anular
+      if (tienePermiso) {
+        setPVenta0103(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '01-04'); //Eliminar
+      if (tienePermiso) {
+        setPVenta0104(true);
+      }
+      //setUpdateTrigger(Math.random());//experimento
+    })
+    .catch(error => {
+      console.log('Error al obtener los permisos:', error);
+    });
+  }
+
   //////////////////////////////////////////////////////////
   useEffect( ()=> {
       cargaRegistro();
-  },[updateTrigger])
+
+      //NEW codigo para autenticacion y permisos de BD
+      if (isAuthenticated && user && user.email) {
+        // cargar permisos de sistema
+        cargaPermisosMenuComando('01'); //Alimentamos el useState permisosComando
+        //console.log(permisosComando);
+      }
+      
+  },[updateTrigger, isAuthenticated, user]) //Aumentamos IsAuthenticated y user
   //////////////////////////////////////////////////////////
 
  return (
   <>
-  <Grid container>
-    <Grid item xs={9}>
+  <Grid container
+        direction={isSmallScreen ? 'column' : 'row'}
+        //alignItems={isSmallScreen ? 'center' : 'center'}
+        justifyContent={isSmallScreen ? 'center' : 'center'}
+  >
+    <Grid item xs={10} >
       <TextField fullWidth variant="outlined" color="success" size="small"
                                    label="FILTRAR"
                                    sx={{display:'block',
-                                        margin:'.5rem 0'}}
+                                        margin:'.0rem 0'}}
                                    name="busqueda"
-                                   placeholder='Cliente   Vendedor   Producto'
+                                   placeholder='Cliente   Vendedor   Producto   Pedido'
                                    onChange={actualizaValorFiltro}
                                    inputProps={{ style:{color:'white'} }}
                                    InputProps={{
@@ -354,32 +489,21 @@ export default function VentaList() {
                                   }}
       />
     </Grid>
-    <Grid item xs={0.9}>    
-
+    <Grid item xs={0.9} >
+      <BotonExcelVentas registrosdet={registrosdet} 
+      />          
+      
     </Grid>
-    <Grid item xs={0.9}>    
+    <Grid item xs={1.1} >    
       <Button variant='contained' 
               fullWidth
-              color='success' 
-              sx={{display:'block',
-              margin:'.5rem 0'}}
-              onClick={ ()=>{
-                exportToExcel(registrosdet);
-                    }
-              }
+              color='warning'
+              sx={{display:'block',margin:'.0rem 0'}}
               >
-      EXCEL
+      PDF-R
       </Button>
     </Grid>
-    <Grid item xs={1.1}>    
-      <Button variant='contained' 
-              color='warning' 
-              sx={{display:'block',
-              margin:'.5rem 0'}}
-              >
-      PDF-Rep
-      </Button>
-    </Grid>
+
   </Grid>
 
     <div>
@@ -403,13 +527,18 @@ export default function VentaList() {
       data={registrosdet}
       selectableRows
       contextActions={contextActions}
+
       actions={actions}
+
 			onSelectedRowsChange={handleRowSelected}
 			clearSelectedRows={toggleCleared}
-      //pagination
+      pagination
+      paginationPerPage={30}
+      paginationRowsPerPageOptions={[30, 50, 100]}
 
       selectableRowsComponent={Checkbox} // Pass the function only
       sortIcon={<ArrowDownward />}  
+      dense={true}
 
     >
     </Datatable>

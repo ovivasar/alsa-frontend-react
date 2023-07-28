@@ -1,12 +1,12 @@
 import React from 'react';
 import { useEffect, useState, useMemo, useCallback } from "react"
-import { Grid, Button } from "@mui/material";
+import { Grid, Button,useMediaQuery } from "@mui/material";
 import { useNavigate,useParams } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import FindIcon from '@mui/icons-material/FindInPage';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Add from '@mui/icons-material/Add';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ArchiveIcon from '@mui/icons-material/ArchiveRounded';
 
 import IconButton from '@mui/material/IconButton';
 import swal from 'sweetalert';
@@ -18,15 +18,18 @@ import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import '../App.css';
 import 'styled-components';
 
-import { utils, writeFile } from 'xlsx';
+//import { utils, writeFile } from 'xlsx';
+import BotonExcelEstilizado from "./BotonExcelOCarga";
 
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-//import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import Tooltip from '@mui/material/Tooltip';
+import { useAuth0 } from '@auth0/auth0-react'; //new para cargar permisos luego de verificar registro en bd
 
 export default function OCargaList() {
+  //verificamos si es pantalla pequeña y arreglamos el grid de fechas
+  const isSmallScreen = useMediaQuery('(max-width: 600px)');
+
   //Para recibir parametros desde afuera
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
@@ -54,30 +57,25 @@ export default function OCargaList() {
       button: 'rgba(0,0,0,.54)',
       hover: 'rgba(0,0,0,.08)',
       disabled: 'rgba(0,0,0,.12)',
-    },
-    overrides: {
-      MuiTable: {
-        root: {
-          borderSpacing: '0',
-        },
-      },
-    }    
+    }
   }, 'dark');
+
   ///////////////////////
-  function exportToExcel(data) {
-    const worksheet = utils.json_to_sheet(data);
+  /*function exportToExcel(data) {
+    const newData = data.map((item) => ({
+    ...item,
+    cantidad: parseFloat(item.cantidad),
+    peso_ticket: parseFloat(item.peso_ticket),
+    sacos_ticket: parseFloat(item.sacos_ticket),
+    e_peso01: parseFloat(item.e_peso01),
+    e_monto01: parseFloat(item.e_monto01),
+    }));
+
+    const worksheet = utils.json_to_sheet(newData);
+
     const workbook = utils.book_new();
     utils.book_append_sheet(workbook, worksheet, 'Datos');
     writeFile(workbook, 'datos.xlsx');
-  }
-  /*function exportToExcel(data) {
-    const worksheet = utils.json_to_sheet(data);
-    const workbook = utils.book_new();
-    utils.book_append_sheet(workbook, worksheet, 'Datos');
-    const excelBuffer = writeFile(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const dataUrl = URL.createObjectURL(blob);
-    window.open(dataUrl, '_blank');
   }*/
   //experimento
   const [updateTrigger, setUpdateTrigger] = useState({});
@@ -88,9 +86,29 @@ export default function OCargaList() {
   const [registrosdet,setRegistrosdet] = useState([]); //Para vista principal
   const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado
   const [valorBusqueda, setValorBusqueda] = useState(""); //txt: rico filtrado
-  
+  const [regdet,setRegdet] = useState({ //Para envio minimo en Ejec
+    ano:'',
+    numero:'',
+    item:''
+  })
+
   const [valorVista, setValorVista] = useState("resumen");
+  const [valorTipo, setValorTipo] = useState("P");
   const [eliminacionCompletada, setEliminacionCompletada] = useState(false);
+  
+  const [permisosComando, setPermisosComando] = useState([]); //MenuComandos
+  const {user, isAuthenticated } = useAuth0();
+  //Permisos OC Progr Nivel 01 - Lista Ordenes
+  const [pProg0201_01, setPProg0201_01] = useState(false); //Nuevo (Casi libre)
+  const [pProg0201_02, setPProg0201_02] = useState(false); //Visualizar (Restringido)
+  const [pProg0201_03, setPProg0201_03] = useState(false); //ANULAR ORDEN
+  const [pProg0201_04, setPProg0201_04] = useState(false); //ELIMINAR ORDEN
+  
+  //Permisos OC Ejecucion
+  const [pProg0202_01, setPProg0202_01] = useState(false); //Nuevo (Casi libre)
+  const [pProg0202_02, setPProg0202_02] = useState(false); //Visualizar (Restringido)
+  const [pProg0202_03, setPProg0202_03] = useState(false); //ANULAR ORDEN
+  const [pProg0202_04, setPProg0202_04] = useState(false); //ELIMINAR ORDEN
 
   const handleRowSelected = useCallback(state => {
 		setSelectedRows(state.selectedRows);
@@ -103,14 +121,16 @@ export default function OCargaList() {
       var strAno;
       var strNumero;
       var nItem;
+      var strTipo;
       strFecha = selectedRows.map(r => r.fecha);
       strNumero = selectedRows.map(r => r.numero);
       nItem = selectedRows.map(r => r.item);
+      strTipo = selectedRows.map(r => r.tipo);
 
       const fechaArmada = new Date(strFecha); //ok con hora 00:00:00
       strAno = (fechaArmada.getFullYear()).toString(); 
   
-			confirmaEliminacion(strAno,strNumero,nItem);
+			confirmaEliminacion(strAno,strNumero,nItem,strTipo);
 		};
 
 
@@ -118,65 +138,89 @@ export default function OCargaList() {
 			var strFecha;
       var strAno;
       var strNumero;
+      var strTipo;
       var nItem;
       var sModo;
       strFecha = selectedRows.map(r => r.fecha);
       strNumero = selectedRows.map(r => r.numero);
       nItem = selectedRows.map(r => r.item);
+      strTipo = selectedRows.map(r => r.tipo);
+
       const fechaArmada = new Date(strFecha); //ok con hora 00:00:00
       strAno = (fechaArmada.getFullYear()).toString(); 
       
       sModo = "editar";
-      navigate(`/ocarga/${strAno}/${strNumero}/edit`);
-		};
-
-    const handleClonar = () => {
-			var strFecha;
-      var strAno;
-      var strNumero;
-      var nItem;
-      var sModo;
-      strFecha = selectedRows.map(r => r.fecha);
-      strNumero = selectedRows.map(r => r.numero);
-      nItem = selectedRows.map(r => r.item);
-      const fechaArmada = new Date(strFecha); //ok con hora 00:00:00
-      strAno = (fechaArmada.getFullYear()).toString(); 
-
-      sModo = "clonar";
-      navigate(`/ocargadet/${params.fecha_proceso}/${strAno}/${strNumero}/${nItem}/${sModo}/edit`);
+      navigate(`/ocarga/${strAno}/${strNumero}/${strTipo}/edit`);
 		};
 
   
 		return (
       <>
-			<Button key="delete" onClick={handleDelete} >
-       ELIMINAR <DeleteIcon/>
-			</Button>
+      {
+      valorVista !== "resumen" && (
+      //Diferenciar si estamos en:
+      // vista analisis para codigo eliminacion(Progr)  soloanalisis
+      // vista ejecucion para codigo eliminacion(Ejec) ejecucion
+      ((pProg0201_04 && valorVista==="analisis") || (pProg0202_04 && valorVista==="ejecucion")) && (
+      <Button key="delete" onClick={handleDelete}>
+        ELIMINAR <DeleteIcon />
+      </Button>
+      )
+      )
+      }
 			
+      {
+      ((pProg0201_02 && valorVista==="analisis") || (pProg0202_02 && valorVista==="ejecucion")) && (
       <Button key="modificar_grupo" onClick={handleUpdateGrupo} >
-       MOD. GRUPO<EditRoundedIcon/>
+       VISUALIZAR<EditRoundedIcon/>
 			</Button>
+      )
+      }
 
-			<Button key="clonar" onClick={handleClonar} >
-       CLONAR<ContentCopyIcon/>
-			</Button>
       </>
 		);
 	}, [registrosdet, selectedRows, toggleCleared]);
 
-  const actions = (
-    	<IconButton color="primary" 
-        onClick = {()=> {
-                    //navigate(`/ocargadet/${params.fecha_proceso}/new`);
-                    navigate(`/ocargadet01/${params.fecha_proceso}/new`)
-                  }
-                }
-      >
-    		<Add />
-    	</IconButton>
+  let actions;
+  actions = (
+    <>
+      { //Solo para vista analisis boton nuevo
+        valorVista === "analisis" && (
+       //Y Solo para autorizados OC progr
+       pProg0201_01 && (
+       <Tooltip title="Nueva Orden Carga">
+          <IconButton color="primary" 
+            onClick = {()=> {
+                      navigate(`/ocargadet01/${params.fecha_proceso}/${valorTipo}/new`)
+                      }
+                    }
+          >
+            <Add />
+          </IconButton>
+       </Tooltip>
+      )
+      )
+      }
+    
+      {valorVista === "ejecucion" && (
+      <Tooltip title="Registra Descarguio">
+          <IconButton color="primary" 
+            onClick = {()=> {
+                      navigate(`/ocargadettraslado/${params.fecha_proceso}/${valorTipo}/new`)
+                      }
+                    }
+          >
+            <ArchiveIcon />
+          </IconButton>
+      </Tooltip>
+      )
+      }
+    </>
+
   );
 
   const cargaRegistro = async () => {
+    var strTipo="";
     var response;
     let strFechaIni="";
     let strFecha="";
@@ -198,20 +242,26 @@ export default function OCargaList() {
     //console.log("valor antes de cargar backend: ", valorVista);
     //al reves por mientras
     if (valorVista==="analisis"){
-      response = await fetch(`${back_host}/ocargaplan/${strFechaIni}/${strFecha}`);
+      strTipo= "P";
+      response = await fetch(`${back_host}/ocargaplan/${strFechaIni}/${strFecha}/${strTipo}`);//tipo='p' programado
     }else{
       if (valorVista==="diario"){
-        response = await fetch(`${back_host}/ocargaplan/${strFecha}/${strFecha}`);
+        strTipo= "P";
+        response = await fetch(`${back_host}/ocargaplan/${strFecha}/${strFecha}/${strTipo}`);
       }else{
-        if (valorVista==="transbordos"){
-          response = await fetch(`${back_host}/ocargaplantransb/${strFecha}`);
+        if (valorVista==="ejecucion"){
+          strTipo= "E";
+          //response = await fetch(`${back_host}/ocargaplantransb/${strFecha}`); //api anulado
+          response = await fetch(`${back_host}/ocargaplan/${strFechaIni}/${strFecha}/${strTipo}`);//tipo='e' ejecucion
         }
         else{//El resumen nomas
+          strTipo= "P";
           response = await fetch(`${back_host}/ocarga/${strFecha}`);
         }
       }
     }
-    
+    setValorTipo(strTipo);
+
     const data = await response.json();
     setRegistrosdet(data);
     setTabladet(data); //Copia para tratamiento de filtrado
@@ -221,19 +271,45 @@ export default function OCargaList() {
     { name:'FECHA', 
       selector:row => row.fecha,
       sortable: true,
+      width: '80px',
       key:true
     },
+
+    {
+      name: "",
+      cell: (row) => (
+        <button
+          style={{
+            backgroundColor: (row.tipo === "P" && valorVista === "ejecucion") ? "red" : "green",
+            color: "white",
+            border: "none",
+            padding: "10px",
+            borderRadius: "5px",
+          }}
+          onClick={() => handleModEjecucion(row.ano,row.numero,row.item)}
+        >
+          
+          {row.tipo === "P" ? "PROGRAM." : "EJECUCION"}
+        </button>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+
     { name:'PEDIDO', 
       selector:row => row.pedido,
+      width: '70px',
       sortable: true
     },
     { name:'ORDEN', 
       selector:row => row.numero,
-      width: '90px',
+      width: '70px',
       sortable: true
     },
     { name:'ESTADO', 
       selector:row => row.estado,
+      width: '90px',
       sortable: true
     },
     { name:'CLIENTE', 
@@ -243,18 +319,7 @@ export default function OCargaList() {
     { name:'#', 
       selector:row => row.item,
       sortable: true,
-      width: '70px'
-    },
-    { name:'TRASLA', 
-      //button: true,  
-      width: '90px',
-      cell: (row) => (
-        <div style={{ display: row.tb === '0' ? 'none' : 'block' }}>
-          <IconButton onClick={() => handleTraslado(row)} color="success">
-            <LocalShippingIcon />
-          </IconButton>
-        </div>                
-      )
+      width: '40px'
     },
     { name:'CANT.', 
       selector:row => row.cantidad,
@@ -279,14 +344,21 @@ export default function OCargaList() {
     },
     { name:'OPERACION', 
       selector:row => row.operacion,
+      width: '80px',
       sortable: true
     },
     { name:'SACOS', 
       selector:row => row.sacos_real,
+      width: '70px',
+      sortable: true
+    },
+    { name:'OBSERVACION', 
+      selector:row => row.e_observacion,
       sortable: true
     },
     { name:'ENTREGA', 
       selector:row => row.zona_entrega,
+      width: '70px',
       sortable: true
     },
     { name:'TICK #', 
@@ -350,29 +422,62 @@ export default function OCargaList() {
       selector:row => row.e_estibadores,
       sortable: true
     },
+    { name:'TIPO', 
+      selector:row => row.tipo,
+      sortable: true,
+    },
     { name:'AÑO', 
       selector:row => row.ano,
       sortable: true,
-      /*cell: row => (
-        //<div style={{ visibility: 'hidden' }}>
-        //  {row.ano}
-        //</div>
-        <div style={{ display: row.tb === '0' ? 'none' : 'block' }}>
-            {row.ano}
-        </div>        
-      )*/
     }
   ];
 
-  const handleTraslado = (row) => {
-    // Aquí puedes agregar la lógica para modificar la fila seleccionada
-    console.log(`Modificar fila ${row.numero}`);
-    //Mostrar formulario para completar datos: ticket_tras, peso_ticket_tras, sacos_ticket_tras
-    navigate(`/ocargadettraslado/${params.fecha_proceso}/${row.ano}/${row.numero}/${row.item}`)
+  const handleModEjecucion = async(p_ano,p_numero,p_item) => {
+    //Solo ejecuta para vista ejecucion
+    if (valorVista==="ejecucion") {
 
+      await swal({
+        title:"EJECUTAR OPERACION",
+        text:"Seguro ?",
+        icon:"warning",
+        buttons:["No","Si"]
+      }).then(respuesta=>{
+          if (respuesta){
+           
+            ejecutaRegistroSeleccionado(p_ano,p_numero,p_item);
+
+            setTimeout(() => { // Agrega una función para que se ejecute después del tiempo de espera
+                setUpdateTrigger(Math.random());//actualiza la vista actual
+            }, 200);
+                       
+            swal({
+              text:"Operacion ejecutada con exito",
+              icon:"success",
+              timer:"2000"
+            });
+        }
+      })
+
+    }
   };
-  
-  const confirmaEliminacion = async(ano,numero,item) =>{
+  const ejecutaRegistroSeleccionado = async (p_ano,p_numero,p_item) => {
+      //Insertar ocargadet identico, pero con tipo = 'E'
+      console.log(`Modificando a Ejecucion con orden: ${p_ano} ${p_numero} ${p_item}`);
+      //armar un useState para el body
+      regdet.ano =  p_ano;
+      regdet.numero = p_numero;
+      regdet.item = p_item;
+      console.log(regdet);
+
+      console.log(`${back_host}/ocargadetaddejec`);
+      await fetch(`${back_host}/ocargadetaddejec`, {
+        method: "POST",
+        body: JSON.stringify(regdet),
+        headers: {"Content-Type":"application/json"}
+      });
+  }
+
+  const confirmaEliminacion = async(ano,numero,item,tipo) =>{
     //Eliminar por numeor y item, estamos en vista planilla
     await swal({
       title:"Eliminar Registro",
@@ -381,58 +486,61 @@ export default function OCargaList() {
       buttons:["No","Si"]
     }).then(respuesta=>{
         if (respuesta){
-          //console.log(ano,numero,item);
-          //console.log(ano,numero[0],item[0]);
-          eliminarRegistroSeleccionado(ano,numero[0],item[0]);
-
-          setToggleCleared(!toggleCleared);
-          setRegistrosdet(registrosdet.filter(
-                          registrosdet => (registrosdet.ano !== ano &&
-                                          registrosdet.numero !== numero[0] && 
-                                          registrosdet.item !== item[0])
-                          ));
           
-          setTimeout(() => { // Agrega una función para que se ejecute después del tiempo de espera
-              setUpdateTrigger(Math.random());//experimento
-          }, 200);
-         
-          
-          swal({
-            text:"Venta se ha eliminado con exito",
-            icon:"success",
-            timer:"2000"
-          });
+          //console.log(tipo);
+          if (valorVista==='ejecucion') {
+              if (tipo[0] === 'E') {
+                eliminarRegistroSeleccionado(ano,numero[0],item[0]);
+                
+                setToggleCleared(!toggleCleared);
+                setRegistrosdet(registrosdet.filter(
+                                registrosdet => (registrosdet.ano !== ano &&
+                                                registrosdet.numero !== numero[0] && 
+                                                registrosdet.item !== item[0])
+                                ));
+                
+                setTimeout(() => { // Agrega una función para que se ejecute después del tiempo de espera
+                    setUpdateTrigger(Math.random());//experimento
+                }, 200);
+              
+                swal({
+                  text:"Orden de Carga se ha eliminado con exito",
+                  icon:"success",
+                  timer:"2000"
+                });
+              }
+              else{
+                swal({
+                  text:"No se permite con Orden Programada, SOLO EJECUTADAS",
+                  icon:"warning",
+                  timer:"2000"
+                });
+              }
+          }
+          else{//en caso sea vista detalle o diario, solo programados, NO EJECUCION
+              //DEBEMOS ALERTAR QUE SI TIENE EJECUTADO, NO SE PUEDE
+              eliminarRegistroSeleccionado(ano,numero[0],item[0]);
+                
+              setToggleCleared(!toggleCleared);
+              setRegistrosdet(registrosdet.filter(
+                              registrosdet => (registrosdet.ano !== ano &&
+                                              registrosdet.numero !== numero[0] && 
+                                              registrosdet.item !== item[0])
+                              ));
+              
+              setTimeout(() => { // Agrega una función para que se ejecute después del tiempo de espera
+                  setUpdateTrigger(Math.random());//experimento
+              }, 200);
+            
+              swal({
+                text:"Orden de Carga se ha eliminado con exito",
+                icon:"success",
+                timer:"2000"
+              });
+          }
       }
     })
   }
-
-/*  const confirmaEliminacion = (ano,numero,item)=>{
-    //Eliminar por numeor y item, estamos en vista planilla
-    swal({
-      title:"Eliminar Registro",
-      text:"Seguro ?",
-      icon:"warning",
-      buttons:["No","Si"]
-    }).then(respuesta=>{
-        if (respuesta){
-          eliminarRegistroSeleccionado(ano,numero,item);
-          setToggleCleared(!toggleCleared);
-          setRegistrosdet(registrosdet.filter(
-                          registrosdet => registrosdet.ano !== ano &&
-                                          registrosdet.numero !== numero && 
-                                          registrosdet.item !== item
-                          ));
-          setUpdateTrigger(Math.random());//experimento
-  
-          swal({
-            text:"Venta se ha eliminado con exito",
-            icon:"success",
-            timer:"2000"
-          });
-      }
-    })
-  }
- */
 
   const navigate = useNavigate();
 
@@ -487,20 +595,84 @@ export default function OCargaList() {
     },
   };
 
+  const cargaPermisosMenuComando = async(idMenu)=>{
+    //Realiza la consulta a la API de permisos
+    fetch(`https://alsa-backend-js-production.up.railway.app/seguridad/${user.email}/${idMenu}`, {
+      method: 'GET'
+    })
+    .then(response => response.json())
+    .then(permisosData => {
+      // Guarda los permisos en el estado
+      setPermisosComando(permisosData);
+      console.log(permisosComando);
+      let tienePermiso;
+      // Verifica si existe el permiso de acceso 'oc progr'
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0201-01'); //Nuevo
+      if (tienePermiso) {
+        setPProg0201_01(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0201-02'); //Visualizar
+      if (tienePermiso) {
+        setPProg0201_02(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0201-03'); //Anular
+      if (tienePermiso) {
+        setPProg0201_03(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0201-04'); //Eliminar
+      if (tienePermiso) {
+        setPProg0201_04(true);
+      }
+
+      // Verifica si existe el permiso de acceso 'oc ejec'
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0202-01'); //Nuevo
+      if (tienePermiso) {
+        setPProg0202_01(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0202-02'); //Visualizar
+      if (tienePermiso) {
+        setPProg0202_02(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0202-03'); //Anular
+      if (tienePermiso) {
+        setPProg0202_03(true);
+      }
+      tienePermiso = permisosData.some(permiso => permiso.id_comando === '0202-04'); //Eliminar
+      if (tienePermiso) {
+        setPProg0202_04(true);
+      }
+      
+    })
+    .catch(error => {
+      console.log('Error al obtener los permisos:', error);
+    });
+  }
   //////////////////////////////////////////////////////////
   useEffect( ()=> {
       cargaRegistro();
-  },[updateTrigger])
+
+      //NEW codigo para autenticacion y permisos de BD
+      if (isAuthenticated && user && user.email) {
+        // cargar permisos de sistema
+        cargaPermisosMenuComando('02'); //Alimentamos el useState permisosComando
+        //console.log(permisosComando);
+      }
+
+  },[updateTrigger, isAuthenticated, user])
   //////////////////////////////////////////////////////////
 
  return (
   <>
-  <Grid container>
+  <Grid container
+        direction={isSmallScreen ? 'column' : 'row'}
+        //alignItems={isSmallScreen ? 'center' : 'center'}
+        justifyContent={isSmallScreen ? 'center' : 'center'}
+  >
     <Grid item xs={10}>
       <TextField fullWidth variant="outlined" color="warning" size="small"
                                    label="FILTRAR"
                                    sx={{display:'block',
-                                        margin:'.5rem 0'}}
+                                        margin:'.0rem 0'}}
                                    name="busqueda"
                                    placeholder='Cliente   Producto   Estibaje'
                                    onChange={actualizaValorFiltro}
@@ -516,25 +688,16 @@ export default function OCargaList() {
       />
     </Grid>
     <Grid item xs={0.9}>    
-      <Button variant='contained' 
-              color='success' 
-              sx={{display:'block',
-              margin:'.5rem 0'}}
-              onClick={ ()=>{
-                exportToExcel(registrosdet);
-                    }
-              }
-              >
-      EXCEL
-      </Button>
+      <BotonExcelEstilizado registrosdet={registrosdet} />
     </Grid>
     <Grid item xs={1.1}>    
       <Button variant='contained' 
+              fullWidth
               color='warning' 
               sx={{display:'block',
-              margin:'.5rem 0'}}
+              margin:'.0rem 0'}}
               >
-      PDF-Rep
+      PDF-R
       </Button>
     </Grid>
   </Grid>
@@ -547,10 +710,10 @@ export default function OCargaList() {
       onChange={actualizaValorVista}
       aria-label="Platform"
     >
-      <ToggleButton value="resumen">Resumen</ToggleButton>
-      <ToggleButton value="analisis">Analisis</ToggleButton>
-      <ToggleButton value="diario">Diario</ToggleButton>
-      <ToggleButton value="transbordos">Transb. Diario</ToggleButton>
+      <ToggleButton value="resumen">Resumen Progr.</ToggleButton>
+      <ToggleButton value="analisis">Analisis Progr.</ToggleButton>
+      <ToggleButton value="diario">Diario Progr.</ToggleButton>
+      <ToggleButton value="ejecucion">Analisis Ejecucion</ToggleButton>
     </ToggleButtonGroup>      
     </div>
     
@@ -565,7 +728,9 @@ export default function OCargaList() {
 			onSelectedRowsChange={handleRowSelected}
 			clearSelectedRows={toggleCleared}
       highlightOnHover
-      //pagination
+      pagination
+      paginationPerPage={30}
+      paginationRowsPerPageOptions={[30, 50, 100]}
 
       selectableRowsComponent={Checkbox} // Pass the function only
       sortIcon={<ArrowDownward />}  

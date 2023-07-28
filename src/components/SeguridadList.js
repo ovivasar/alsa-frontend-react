@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState, useMemo, useCallback } from "react"
-import { Button } from "@mui/material";
+import { Button} from "@mui/material";
 import { useNavigate,useParams } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import FindIcon from '@mui/icons-material/FindInPage';
@@ -19,7 +19,7 @@ import 'styled-components';
 
 import { useAuth0 } from '@auth0/auth0-react'; //new para cargar permisos luego de verificar registro en bd
 
-export default function ZonaList() {
+export default function SeguridadList() {
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
   createTheme('solarized', {
@@ -55,13 +55,8 @@ export default function ZonaList() {
 	//const [data, setData] = useState(tableDataItems);
   const [registrosdet,setRegistrosdet] = useState([]);
   const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado
-
-  //Permisos Zona Venta Nivel 01 - Lista 
-  const [permisosComando, setPermisosComando] = useState([]); //MenuComandos
+  
   const {user, isAuthenticated } = useAuth0();
-  const [pZonaVenta0601, setPZonaVenta0601] = useState(false); //Nuevo (Casi libre)
-  const [pZonaVenta0602, setPZonaVenta0602] = useState(false); //Modificar (Restringido)
-  const [pZonaVenta0603, setPZonaVenta0603] = useState(false); //Eliminar (Casi Nunca solo el administrador)
 
   const handleRowSelected = useCallback(state => {
 		setSelectedRows(state.selectedRows);
@@ -71,67 +66,47 @@ export default function ZonaList() {
     //console.log("asaaa");
 		const handleDelete = () => {
 			var strSeleccionado;
-      strSeleccionado = selectedRows.map(r => r.id_zona);
+      strSeleccionado = selectedRows.map(r => r.id_producto);
 			confirmaEliminacion(strSeleccionado);
 		};
 
     const handleUpdate = () => {
 			var strSeleccionado;
-      strSeleccionado = selectedRows.map(r => r.id_zona);
-			navigate(`/zona/${strSeleccionado}/edit`);
+      strSeleccionado = selectedRows.map(r => r.id_producto);
+			navigate(`/producto/${strSeleccionado}/edit`);
 		};
 
 		return (
       <>
-      { pZonaVenta0603 ? 
-        (      
 			<Button key="delete" onClick={handleDelete} >
         ELIMINAR
         <DeleteIcon></DeleteIcon>
 			</Button>
-        ):
-        (
-          <span></span>
-        )
-      }
-
-      { pZonaVenta0602 ? 
-        (      
 			<Button key="modificar" onClick={handleUpdate} >
         MODIFICAR
       <UpdateIcon/>
 			</Button>
-        ):
-        (
-          <span></span>
-        )
-      }
 
       </>
 		);
 	}, [registrosdet, selectedRows, toggleCleared]);
 
-  let actions;
-  if (pZonaVenta0601) {
-    actions = (
+  const actions = (
     	<IconButton color="primary" 
         onClick = {()=> {
-                      navigate(`/zona/new`);
+                      navigate(`/producto/new`);
                   }
                 }
       >
     		<Add />
     	</IconButton>
-      );
-  } else {
-    actions = null; // Opcionalmente, puedes asignar null u otro valor cuando la condición no se cumple
-  }
+  );
 
   //////////////////////////////////////////////////////////
   //const [registrosdet,setRegistrosdet] = useState([]);
   //////////////////////////////////////////////////////////
   const cargaRegistro = async () => {
-    const response = await fetch(`${back_host}/zona`);
+    const response = await fetch(`${back_host}/seguridad/${user.email}/vista`);
     const data = await response.json();
     setRegistrosdet(data);
     setTabladet(data); //Copia para tratamiento de filtrado
@@ -139,7 +114,7 @@ export default function ZonaList() {
   //////////////////////////////////////
   const columnas = [
     { name:'CODIGO', 
-      selector:row => row.id_zona,
+      selector:row => row.id_comando,
       sortable: true,
       width: '110px'
       //key:true
@@ -153,12 +128,17 @@ export default function ZonaList() {
       selector:row => row.descripcion,
       width: '150px',
       sortable: true
-    }
+    },
+    { name:'PERMISO', 
+      selector:row => row.id_permiso,
+      //width: '350px',
+      sortable: true
+    },
   ];
   
   const confirmaEliminacion = (id_registro)=>{
     swal({
-      title:"Eliminar Zona",
+      title:"Eliminar Producto",
       text:"Seguro ?",
       icon:"warning",
       buttons:["No","Si"]
@@ -166,15 +146,11 @@ export default function ZonaList() {
         if (respuesta){
           eliminarRegistroDet(id_registro);
           setToggleCleared(!toggleCleared);
-          setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.id_zona !== id_registro));
-          
-          setTimeout(() => { // Agrega una función para que se ejecute después del tiempo de espera
-            setUpdateTrigger(Math.random());//experimento
-          }, 200);
-          //setUpdateTrigger(Math.random());//experimento
+          setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.id_producto !== id_registro));
+          setUpdateTrigger(Math.random());//experimento
   
           swal({
-            text:"Zona de Entrega: se ha eliminado con exito",
+            text:"Producto se ha eliminado con exito",
             icon:"success",
             timer:"2000"
           });
@@ -184,13 +160,13 @@ export default function ZonaList() {
  
   const navigate = useNavigate();
   //Para recibir parametros desde afuera
-  //const params = useParams();
+  const params = useParams();
 
   const eliminarRegistroDet = async (id_registro) => {
-    await fetch(`${back_host}/zona/${id_registro}`, {
+    await fetch(`${back_host}/producto/${id_registro}`, {
       method:"DELETE"
     });
-    //setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.id_zona !== id_registro));
+    //setRegistrosdet(registrosdet.filter(registrosdet => registrosdet.id_producto !== id_registro));
     //console.log(data);
   }
   const actualizaValorFiltro = e => {
@@ -208,49 +184,10 @@ export default function ZonaList() {
     setRegistrosdet(resultadosBusqueda);
 }
 
-const cargaPermisosMenuComando = async(idMenu)=>{
-  //Realiza la consulta a la API de permisos
-  fetch(`https://alsa-backend-js-production.up.railway.app/seguridad/${user.email}/${idMenu}`, {
-    method: 'GET'
-  })
-  .then(response => response.json())
-  .then(permisosData => {
-    // Guarda los permisos en el estado
-    setPermisosComando(permisosData);
-    console.log(permisosComando);
-    let tienePermiso;
-    // Verifica si existe el permiso de acceso 'Correntistas'
-    tienePermiso = permisosData.some(permiso => permiso.id_comando === '06-01'); //Nuevo
-    if (tienePermiso) {
-      setPZonaVenta0601(true);
-    }
-    tienePermiso = permisosData.some(permiso => permiso.id_comando === '06-02'); //Modificar
-    if (tienePermiso) {
-      setPZonaVenta0602(true);
-    }
-    tienePermiso = permisosData.some(permiso => permiso.id_comando === '06-03'); //Eliminar
-    if (tienePermiso) {
-      setPZonaVenta0603(true);
-    }
-    //setUpdateTrigger(Math.random());//experimento
-  })
-  .catch(error => {
-    console.log('Error al obtener los permisos:', error);
-  });
-}
-
-//////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////
   useEffect( ()=> {
       cargaRegistro();
-
-      //NEW codigo para autenticacion y permisos de BD
-      if (isAuthenticated && user && user.email) {
-        // cargar permisos de sistema
-        cargaPermisosMenuComando('06'); //Alimentamos el useState permisosComando
-        //console.log(permisosComando);
-      }
-
-  },[updateTrigger, isAuthenticated, user])
+  },[updateTrigger])
   //////////////////////////////////////////////////////////
 
  return (
@@ -261,7 +198,7 @@ const cargaPermisosMenuComando = async(idMenu)=>{
                                    sx={{display:'block',
                                         margin:'.5rem 0'}}
                                    name="busqueda"
-                                   placeholder='Zona'
+                                   placeholder='Comando'
                                    onChange={actualizaValorFiltro}
                                    inputProps={{ style:{color:'white'} }}
                                    InputProps={{
@@ -275,22 +212,21 @@ const cargaPermisosMenuComando = async(idMenu)=>{
       />
     </div>
 
-
     <Datatable
-      title="Gestion de Zonas Venta"
+      title="Gestion de Seguridad"
       theme="solarized"
       columns={columnas}
       data={registrosdet}
       selectableRows
       contextActions={contextActions}
       actions={actions}
-			onSelectedRowsChange={handleRowSelected}
-			clearSelectedRows={toggleCleared}
+      onSelectedRowsChange={handleRowSelected}
+      clearSelectedRows={toggleCleared}
       //pagination
+
       selectableRowsComponent={Checkbox} // Pass the function only
       sortIcon={<ArrowDownward />}  
-      dense={true}
-      //customStyles={{ rows: { minHeight: '10px' } }}
+
     >
     </Datatable>
 

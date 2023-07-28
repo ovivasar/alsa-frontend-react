@@ -1,8 +1,10 @@
-import {Grid,Card,CardContent,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl} from '@mui/material'
-import { useState,useEffect} from 'react';
+import {Grid,Card,CardContent,TextField,Button,CircularProgress,Select, MenuItem, InputLabel, Box, FormControl,List,ListItem,ListItemText, Dialog, DialogContent, DialogTitle} from '@mui/material'
+import { useState,useEffect,useRef} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import axios from 'axios';
 import FindIcon from '@mui/icons-material/FindInPage';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+
 import IconButton from '@mui/material/IconButton';
 import React from 'react';
 
@@ -22,16 +24,7 @@ export default function VentaFormDet() {
     {moneda:'S/'},
     {moneda:'USD'}
   ]);
-
-  const [cond_venta_select] = useState([
-    {cond_venta:'PESO LLEGADA'},
-    {cond_venta:'PESO PARTIDA'}
-  ]);
-  const [cond_entrega_select] = useState([
-    {cond_entrega:'PUESTO EN ALMACEN'},
-    {cond_entrega:'RECOGIDO POR CLIENTE'}
-  ]);
-
+  
   const [updateTrigger, setUpdateTrigger] = useState({});
   const [razonSocialBusca, setRazonSocialBusca] = useState("");
     //funcion para mostrar data de formulario, modo edicion
@@ -60,9 +53,14 @@ export default function VentaFormDet() {
   //Select(Combos) para llenar, desde tabla
   const [zonaentrega_select,setZonaEntregaSelect] = useState([]);
   const [producto_select,setProductoSelect] = useState([]);
-  const [formapago_select,setFormaPagoSelect] = useState([]);
   const [igvselected, setIgvSelected] = useState(true);
-  
+  //////////////////////////////////////////////////////////
+  const [cliente,setCliente] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const textFieldRef = useRef(null); //foco del buscador
+  //////////////////////////////////////////////////////////
+
   const [cargando,setCargando] = useState(false);
   const [editando,setEditando] = useState(false);
   
@@ -88,10 +86,7 @@ export default function VentaFormDet() {
       unidad_medida:'TNE',   //new
       id_zona_entrega:'',
       zona_entrega:'',
-      id_formapago:'', 
-      formapago:'',   
-      cond_venta:'',  
-      cond_entrega:'', 
+
       fecha_entrega2:'', 
       id_producto:'',
       descripcion:'',
@@ -103,6 +98,35 @@ export default function VentaFormDet() {
       ref_observacion:'-',
       registrado:'1'
   })
+
+  const handleCodigoKeyDown = async (event) => {
+    if (event.key === '+') {
+        setShowModal(true);
+    }
+    if (event.key === '-') {
+      setShowModal(false);
+    }
+    console.log(event.key);
+    if (event.key === 'Enter') {
+      //Selecciona el 1er elemento de la lista, en caso no haya filtrado nada
+      handleClienteSelect(filteredClientes[0].documento_id, filteredClientes[0].razon_social);
+
+      setShowModal(false);
+    }
+  };
+  const handleClienteSelect = (codigo, cliente) => {
+    setSearchText(codigo);
+    setVentaDet({...ventaDet, ref_documento_id:codigo, ref_razon_social:cliente});
+    setShowModal(false);
+  };
+  const handleSearchTextChange = (event) => {
+    setSearchText(event.target.value.replace('+', '').replace('-',''));
+    setVentaDet({...ventaDet, ref_documento_id:event.target.value.replace('+', '').replace('-','')});
+  };
+  const filteredClientes = cliente.filter((c) =>
+  `${c.documento_id} ${c.razon_social}`.toLowerCase().includes(searchText.toLowerCase())
+  );
+
 
   const handleSubmit = async(e) => {
     e.preventDefault();
@@ -128,23 +152,33 @@ export default function VentaFormDet() {
     
     setEditando(true);
     setUpdateTrigger(Math.random());//experimento
-    navigate(`/venta/${params.cod}/${params.serie}/${params.num}/${params.elem}/edit`);
-    
+    if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
+      navigate(`/ventamovil/${params.cod}/${params.serie}/${params.num}/${params.elem}/edit`);
+    }else{
+      //navigate(`/venta/${params.cod}/${params.serie}/${params.num}/${params.elem}/edit`);
+      navigate(`/ventamovil/${params.cod}/${params.serie}/${params.num}/${params.elem}/edit`);
+    }
     //console.log(zona);
   };
   
   //Aqui se leen parametros en caso lleguen
   useEffect( ()=> {
-    if (params.cod){
+    if (params.item){
+      if (!editando){
       mostrarVenta(params.cod,params.serie,params.num,params.elem,params.item);
+      }
     }  
     
     cargaZonaEntregaCombo();
     cargaProductoCombo();
-    cargaFormaPagoCombo();
+    cargaCliente();
 
-    //console.log(fecha_actual);
-  },[params.cod, updateTrigger]);
+    //foco
+    if (showModal && textFieldRef.current) {
+        textFieldRef.current.focus();
+    }
+    
+  },[params.cod, updateTrigger, showModal, textFieldRef.current]);
 
   const cargaZonaEntregaCombo = () =>{
     axios
@@ -166,11 +200,11 @@ export default function VentaFormDet() {
         console.log(error);
     });
   }
-  const cargaFormaPagoCombo = () =>{
+  const cargaCliente = () =>{
     axios
-    .get(`${back_host}/formapago`)
+    .get(`${back_host}/correntista`)
     .then((response) => {
-        setFormaPagoSelect(response.data);
+        setCliente(response.data);
     })
     .catch((error) => {
         console.log(error);
@@ -195,16 +229,13 @@ export default function VentaFormDet() {
       setVentaDet({...ventaDet, [e.target.name]: e.target.value, descripcion:sTexto});
       return;
     }
-    if (e.target.name === "id_formapago") {
-      const arrayCopia = formapago_select.slice();
-      index = arrayCopia.map(elemento => elemento.id_formapago).indexOf(e.target.value);
-      sTexto = arrayCopia[index].nombre;
-      setVentaDet({...ventaDet, [e.target.name]: e.target.value, formapago:sTexto});
-      return;
-    }
 
     //Para todos los demas casos ;)
     setVentaDet({...ventaDet, [e.target.name]: e.target.value});
+    
+    ///////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////
   }
 
   const mostrarIgvProducto = async (cod) => {
@@ -228,10 +259,6 @@ export default function VentaFormDet() {
                 unidad_medida:data.unidad_medida,  
                 id_zona_entrega:data.id_zona_entrega,
                 zona_entrega:data.zona_entrega,
-                id_formapago:data.id_formapago, //new
-                formapago:data.formapago,       //new
-                cond_venta:data.cond_venta,       //new
-                cond_entrega:data.cond_entrega,   //new
                 fecha_entrega2:data.fecha_entrega2,   //new
                 moneda:data.moneda,   //new
                 id_producto:data.id_producto,
@@ -244,6 +271,7 @@ export default function VentaFormDet() {
                 registrado:data.registrado
               });
     //console.log(data);
+    setSearchText(data.ref_documento_id); //data de cliente para form
     setEditando(true);
   };
   
@@ -277,13 +305,76 @@ export default function VentaFormDet() {
                                       //      margin:'.5rem 0'}}
                                       sx={{mt:-1}}
                                       name="ref_documento_id"
-                                      value={ventaDet.ref_documento_id}
-                                      onChange={handleChange}
+                                      //value={ventaDet.ref_documento_id}
+                                      //onChange={handleChange}
+                                      value={searchText}
+                                      onChange={handleSearchTextChange} //new para busqueda
+                                      onKeyDown={handleCodigoKeyDown} //new para busqueda
                                       inputProps={{ style:{color:'white',width: 140} }}
                                       InputLabelProps={{ style:{color:'white'} }}
                             />
+                            
+                            {/* Seccion para mostrar Dialog tipo Modal, para busqueda incremental clientes */}
+                            <Dialog
+                              open={showModal}
+                              onClose={() => setShowModal(false)}
+                              maxWidth="md"
+                              fullWidth
+                              PaperProps={{
+                                style: {
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  marginTop: '10vh', // Ajusta este valor según tus necesidades
+                                  background:'#1e272e',
+                                  color:'white'
+                                },
+                              }}
+                            >
+                              <DialogTitle>Listado de Clientes</DialogTitle>
+                                <TextField variant="standard" 
+                                            maxWidth="md"
+                                            autoFocus
+                                            size="small"
+                                            //sx={{display:'block',
+                                            //      margin:'.5rem 0'}}
+                                            sx={{mt:-1}}
+                                            name="ref_documento_id_modal"
+                                            inputRef={textFieldRef} // Referencia para el TextField
+                                            value={searchText}
+                                            onChange={handleSearchTextChange} //new para busqueda
+                                            onKeyDown={handleCodigoKeyDown} //new para busqueda
+                                            inputProps={{ style:{color:'white',width: 140} }}
+                                            InputLabelProps={{ style:{color:'white'} }}
+                                  />
+                              <DialogContent>
+                                <List>
+                                  {filteredClientes.map((c) => (
+                                    <ListItem key={c.documento_id} onClick={() => handleClienteSelect(c.documento_id, c.razon_social)}>
+                                      <ListItemText primary={`${c.documento_id} - ${c.razon_social}`} 
+                                      />
+                                    </ListItem>
+                                  ))}
+                                </List>
+                              </DialogContent>
+                            </Dialog>
+                            {/* FIN Seccion para mostrar Dialog tipo Modal */}
+
                         </Grid>
                         <Grid item xs={8}>
+                            <IconButton color="success" aria-label="upload picture" component="label" size="small"
+                              //sx={{display:'block',
+                              //margin:'1rem 0'}}
+                              sx={{mt:-1}}
+                              onClick = { () => {
+                                  //mostrar modal
+                                  setShowModal(true);
+                                }
+                              }
+                            >
+                              <PersonSearchIcon />
+                            </IconButton>
+
                             <IconButton color="warning" aria-label="upload picture" component="label" size="small"
                               //sx={{display:'block',
                               //margin:'1rem 0'}}
@@ -291,13 +382,12 @@ export default function VentaFormDet() {
                               onClick = { () => {
                                   ventaDet.ref_razon_social = "";
                                   mostrarRazonSocialBusca(ventaDet.ref_documento_id);
-                                  //ventaDet.porc_igv = "";
-                                  //mostrarIgvProducto(ventaDet.id_producto);
                                 }
                               }
                             >
                               <FindIcon />
                             </IconButton>
+
                         </Grid>
 
                     </Grid>
@@ -533,94 +623,7 @@ export default function VentaFormDet() {
 
                             </Grid>
 
-                            <Box sx={{ minWidth: 120 }}
-                                   //sx={{mt:-3}}
-                            >
-                                    <FormControl fullWidth>
-                                      <InputLabel id="demo-simple-select-label" 
-                                                  inputProps={{ style:{color:'white'} }}
-                                                  InputLabelProps={{ style:{color:'white'} }}
-                                                  sx={{mt:1, color:'#5DADE2'}}
-                                      >COND. PAGO [ SEL.]</InputLabel>
-                                      <Select
-                                        labelId="producto"
-                                        id={ventaDet.id_formapago}
-                                        value={ventaDet.id_formapago}
-                                        name="id_formapago"
-                                        size="small"
-                                        sx={{display:'block',
-                                        margin:'.5rem 0', color:"white"}}
-                                        label="Forma Pago"
-                                        onChange={handleChange}
-                                        inputProps={{ style:{color:'white'} }}
-                                        InputLabelProps={{ style:{color:'white'} }}
-                                      >
-                                        {   
-                                            formapago_select.map(elemento => (
-                                            <MenuItem   key={elemento.id_formapago} 
-                                                        value={elemento.id_formapago}>
-                                              {elemento.nombre}
-                                            </MenuItem>)) 
-                                        }
-                                      </Select>
-                                    </FormControl>
-                            </Box>
 
-                            <Box sx={{mt:1}}>
-                                    <FormControl fullWidth>
-                                      <InputLabel id="demo-simple-select-label" 
-                                                        inputProps={{ style:{color:'white'} }}
-                                                        InputLabelProps={{ style:{color:'white'} }}
-                                                        sx={{mt:1, color:'#5DADE2'}}
-                                      >COND. VENTA [ SEL.]</InputLabel>
-                                      <Select
-                                              labelId="cond_venta_select"
-                                              id={ventaDet.cond_venta}
-                                              value={ventaDet.cond_venta}
-                                              name="cond_venta"
-                                              size="small"
-                                              sx={{display:'block',
-                                              margin:'.1rem', color:"white"}}
-                                              label="Condicion Venta"
-                                              onChange={handleChange}
-                                            >
-                                              {   
-                                                  cond_venta_select.map(elemento => (
-                                                  <MenuItem key={elemento.cond_venta} value={elemento.cond_venta}>
-                                                    {elemento.cond_venta}
-                                                  </MenuItem>)) 
-                                              }
-                                      </Select>
-                                    </FormControl>
-                            </Box>
-
-                            <Box sx={{mt:1}}>
-                                    <FormControl fullWidth>
-                                      <InputLabel id="demo-simple-select-label" 
-                                                        inputProps={{ style:{color:'white'} }}
-                                                        InputLabelProps={{ style:{color:'white'} }}
-                                                        sx={{mt:1, color:'#5DADE2'}}
-                                      >COND. ENTREGA [ SEL.]</InputLabel>
-                                      <Select
-                                              labelId="cond_entrega_select"
-                                              id={ventaDet.cond_entrega}
-                                              value={ventaDet.cond_entrega}
-                                              name="cond_entrega"
-                                              size="small"
-                                              sx={{display:'block',
-                                              margin:'.1rem', color:"white"}}
-                                              label="Condicion Entrega"
-                                              onChange={handleChange}
-                                            >
-                                              {   
-                                                  cond_entrega_select.map(elemento => (
-                                                  <MenuItem key={elemento.cond_entrega} value={elemento.cond_entrega}>
-                                                    {elemento.cond_entrega}
-                                                  </MenuItem>)) 
-                                              }
-                                      </Select>
-                                    </FormControl>
-                            </Box>
 
                             <TextField variant="filled" 
                                       label="Observaciones"

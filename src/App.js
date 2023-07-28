@@ -1,6 +1,6 @@
 import {Grid,TextField} from '@mui/material'
 import {BrowserRouter,Routes,Route} from "react-router-dom";
-import {Container} from "@mui/material";
+import {Container,useMediaQuery} from "@mui/material";
 import Menu from "./components/NavBar";
 import ZonaList from "./components/ZonaList";
 import ZonaDetList from "./components/ZonaDetList";
@@ -26,15 +26,24 @@ import OCargaFormTraslado from "./components/OCargaFormTraslado";
 import VentaFormMovil from "./components/VentaFormMovil";
 import VentaFormDetTraslado from "./components/VentaFormDetTraslado";
 
+import SeguridadList from "./components/SeguridadList";
+
 import Inicio from "./components/Inicio";
 import { useState,useEffect } from 'react';
+//import LoginBoton from "./components/LoginBoton" //new
+//import LogoutBoton from "./components/LogoutBoton" //new
+//import LoginPerfil from "./components/LoginPerfil" //new
+
 
 function App() {
+  //verificamos si es pantalla pequeña y arreglamos el grid de fechas
+  const isSmallScreen = useMediaQuery('(max-width: 600px)');
+
   const [fecha_ini, setFechaIni] = useState("");
   const [fecha_proceso, setFechaProceso] = useState("");
   const handleChange = e => {
     //Para todos los demas casos ;)
-    if (e.target.name=="fecha_ini"){
+    if (e.target.name==="fecha_ini"){
       setFechaIni(e.target.value);  
     }else{
       setFechaProceso(e.target.value);
@@ -59,20 +68,22 @@ function App() {
 
   return (
     <BrowserRouter>
+
+      <div>
       <Menu fecha_ini={fecha_ini} fecha_proceso={fecha_proceso}>
-
+      
       </Menu>
-
-      <Grid container spacing={2}
-          //direction="column"
-          alignItems="center"
-          justifyContent="center"
+      
+      <Grid container spacing={0}
+          direction={isSmallScreen ? 'column' : 'row'}
+          alignItems={isSmallScreen ? 'center' : 'center'}
+          justifyContent={isSmallScreen ? 'center' : 'center'}
       >
-          <Grid item xs={2}>
+          <Grid item xs={2} sm={2}>
             <TextField variant="outlined" 
                 //label="fecha"
                 sx={{display:'block',
-                    margin:'.5rem 0'}}
+                    margin:'.0rem 0'}}
                 name="fecha_ini"
                 size="small"
                 type="date"
@@ -82,11 +93,11 @@ function App() {
                 InputLabelProps={{ style:{color:'white'} }}
               />
           </Grid>
-          <Grid item xs={2}>
+          <Grid item xs={2} sm={2}>
             <TextField variant="outlined" 
                 //label="fecha"
                 sx={{display:'block',
-                    margin:'.5rem 0'}}
+                    margin:'.0rem 0'}}
                 name="fecha_proceso"
                 size="small"
                 type="date"
@@ -96,6 +107,7 @@ function App() {
                 InputLabelProps={{ style:{color:'white'} }}
               />
           </Grid>
+
       </Grid>
 
       <Container>
@@ -104,21 +116,21 @@ function App() {
           <Route path="/ocargadet/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet />} />
           <Route path="/ocargadet/:fecha_proceso/:ano/:numero/:item/:modo/clon" element={<OCargaFormDet />} />
 
-          <Route path="/ocarga/:ano/:numero/edit" element={<OCargaForm />} />
+          <Route path="/ocarga/:ano/:numero/:tipo/edit" element={<OCargaForm />} />
           <Route path="/ocargadet/:fecha_ini/:fecha_proceso" element={<OCargaList />} />
           
           { /* Agregar desde Panel (un registro01 Libre)
                Agregar Clonado desde Panel (un registro01 con Numero Orden y datos adicionales)
                Agregar desde Form Orden (un registro01 con Numero Orden)   */ }
-          <Route path="/ocargadet01/:fecha_proceso/new" element={<OCargaFormDet01 />} /> 
+          <Route path="/ocargadet01/:fecha_proceso/:tipo/new" element={<OCargaFormDet01 />} /> 
           <Route path="/ocargadet01/:fecha_proceso/:ano/:numero/:item/:modo/clon" element={<OCargaFormDet01 />} />
-          <Route path="/ocargadet01/:fecha_proceso/:ano/:numero/:agrega/new" element={<OCargaFormDet01 />} />
+          <Route path="/ocargadet01/:fecha_proceso/:ano/:numero/:tipo/:agrega/new" element={<OCargaFormDet01 />} />
 
           <Route path="/ocargadet01/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet01 />} />
           <Route path="/ocargadet02/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet02 />} />
           <Route path="/ocargadet03/:fecha_proceso/:ano/:numero/:item/:modo/edit" element={<OCargaFormDet03 />} />
           
-          <Route path="/ocargadettraslado/:fecha_proceso/:ano/:numero/:item" element={<OCargaFormTraslado />} />
+          <Route path="/ocargadettraslado/:fecha_proceso/:tipo/new" element={<OCargaFormTraslado />} />
 
           <Route path="/ocargadetguiaspendientes/:fecha_proceso" element={<OCargaGuiaPendientesList />} />
           {/*  modo=edit, modo=clon  */}
@@ -129,7 +141,7 @@ function App() {
           <Route path="/ventadet/:cod/:serie/:num/:elem/:fecha/new" element={<VentaFormDet />} />
           <Route path="/ventadet/:cod/:serie/:num/:elem/:item/edit" element={<VentaFormDet />} /> 
           <Route path="/ventadettrans/:cod/:serie/:num/:elem/:item/edit" element={<VentaFormDetTrans />} /> 
-          <Route path="/venta/:fecha_ini/:fecha_proceso" element={<VentaList />} />          
+          <Route path="/venta/:fecha_ini/:fecha_proceso/:email" element={<VentaList />} />
           <Route path="/venta/new" element={<VentaForm />} />
           <Route path="/ventamovil/new" element={<VentaFormMovil />} />
           <Route path="/venta/:cod/:serie/:num/:elem/edit" element={<VentaForm />} /> 
@@ -152,9 +164,13 @@ function App() {
           <Route path="/producto" element={<ProductoList />} />
           <Route path="/producto/:id/edit" element={<ProductoForm />} />
           <Route path="/producto/new" element={<ProductoForm />} />
+
+          <Route path="/seguridad" element={<SeguridadList />} />          
           {/*Edit Route */}
         </Routes>
       </Container>
+      
+      </div>
     </BrowserRouter>
 
 

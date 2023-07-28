@@ -658,8 +658,7 @@ export default function OCargaFormDet() {
                                     sx={{mt:1}}
                                     type='submit'
                                     disabled={!ocargaDet.fecha2 || 
-                                              !ocargaDet.operacion ||
-                                              !ocargaDet.tr_placacargado
+                                              !ocargaDet.operacion
                                               }
                                     >
                                     { cargando ? (

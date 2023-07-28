@@ -89,7 +89,7 @@ export default function VentaFormDet() {
     
     setEditando(true);
     setUpdateTrigger(Math.random());//experimento
-    navigate(`/venta/${params.cod}/${params.serie}/${params.num}/${params.elem}/edit`);
+    navigate(`/ventamovil/${params.cod}/${params.serie}/${params.num}/${params.elem}/edit`);
     
     //console.log(zona);
   };
