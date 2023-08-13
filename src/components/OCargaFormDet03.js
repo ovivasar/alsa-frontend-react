@@ -501,7 +501,7 @@ export default function OCargaFormDet() {
           style={{
             background:'#1e272e',
             padding:'1rem',
-            height:'3rem',
+            height:'3.5rem',
             marginTop:".2rem"
           }}
           //key={ocargaDet.ref_documento_id}
@@ -593,7 +593,7 @@ export default function OCargaFormDet() {
           style={{
             background:'#1e272e',
             padding:'1rem',
-            height:'3rem',
+            height:'3.5rem',
             marginTop:".2rem"
           }}
           //key={ocargaDet.ref_documento_id}
@@ -686,7 +686,7 @@ export default function OCargaFormDet() {
           style={{
             background:'#1e272e',
             padding:'1rem',
-            height:'3rem',
+            height:'3.5rem',
             marginTop:".2rem"
           }}
           //key={ocargaDet.ref_documento_id}

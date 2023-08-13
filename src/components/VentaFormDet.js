@@ -91,7 +91,7 @@ export default function VentaFormDet() {
       id_producto:'',
       descripcion:'',
       precio_unitario:'',
-      porc_igv:'18',
+      porc_igv:'0',
       moneda:'USD',//new
       cantidad:'',
       peso_neto:'0',
@@ -544,12 +544,15 @@ export default function VentaFormDet() {
                                         margin:'.8rem 0'}}
                                         selected={igvselected}
                                         onChange={() => {
-                                          setIgvSelected(!igvselected);
+                                          
                                           if (igvselected){
                                             ventaDet.porc_igv=18;
+                                            ventaDet.precio_unitario=(ventaDet.precio_unitario*(1+(18/100))).toFixed(2);
                                           }else{
                                             ventaDet.porc_igv=0;
+                                            ventaDet.precio_unitario=(ventaDet.precio_unitario/(1+(18/100))).toFixed(2);
                                           }
+                                          setIgvSelected(!igvselected);
                                           //console.log(igvselected);
                                           //console.log(ventaDet.porc_igv);
                                         }}

@@ -150,7 +150,15 @@ export default function OCargaList() {
       strAno = (fechaArmada.getFullYear()).toString(); 
       
       sModo = "editar";
-      navigate(`/ocarga/${strAno}/${strNumero}/${strTipo}/edit`);
+      //navigate(`/ocargamovil/${strAno}/${strNumero}/${strTipo}/edit`);
+      if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i)) {
+        console.log("Estás usando un dispositivo móvil!!");
+        navigate(`/ocargamovil/${strAno}/${strNumero}/${strTipo}/edit`);
+      } else {
+        console.log("No estás usando un móvil");
+        navigate(`/ocarga/${strAno}/${strNumero}/${strTipo}/edit`);
+      }    
+
 		};
 
   
@@ -429,7 +437,24 @@ export default function OCargaList() {
     { name:'AÑO', 
       selector:row => row.ano,
       sortable: true,
-    }
+    },
+    { name:'V.FECH', 
+      selector:row => row.fecha_venta,
+      sortable: true,
+    },
+    { name:'V.PREC', 
+      selector:row => row.precio_unitario,
+      sortable: true,
+    },
+    { name:'V.MONE', 
+      selector:row => row.moneda,
+      sortable: true,
+    },
+    { name:'V.IGV%', 
+      selector:row => row.porc_igv,
+      sortable: true,
+    },
+
   ];
 
   const handleModEjecucion = async(p_ano,p_numero,p_item) => {

@@ -57,7 +57,11 @@ const BotonExcelOCarga = ({ registrosdet }) => {
         AE: "Estibadores",
         AF: "Observaciones",
         AG: "RH",
-
+        
+        AH: "Fecha Venta",  //new
+        AI: "Precio Unit",  //new
+        AJ: "Moneda",       //new
+        AK: "IGV%",         //new
       },
     ];
 
@@ -73,6 +77,8 @@ const BotonExcelOCarga = ({ registrosdet }) => {
         e_monto01: parseFloat(item.e_monto01),
         e_monto02: parseFloat(item.e_monto02),
         e_monto03: parseFloat(item.e_monto03),
+        precio_unitario: parseFloat(item.precio_unitario),  //new
+        porc_igv: parseFloat(item.porc_igv),                //new
       }));
   
       newData.forEach((item) => {
@@ -117,6 +123,10 @@ const BotonExcelOCarga = ({ registrosdet }) => {
         AF: item.e_observacion,
         AG: item.e_rh,
         
+        AH: item.fecha_venta,     //new
+        AI: item.precio_unitario, //new
+        AJ: item.moneda,          //new
+        AK: item.porc_igv,        //new
       });
     });
 

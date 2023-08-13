@@ -30,6 +30,7 @@ import SeguridadList from "./components/SeguridadList";
 
 import Inicio from "./components/Inicio";
 import { useState,useEffect } from 'react';
+import OCargaFormMovil from './components/OCargaFormMovil';
 //import LoginBoton from "./components/LoginBoton" //new
 //import LogoutBoton from "./components/LogoutBoton" //new
 //import LoginPerfil from "./components/LoginPerfil" //new
@@ -117,6 +118,7 @@ function App() {
           <Route path="/ocargadet/:fecha_proceso/:ano/:numero/:item/:modo/clon" element={<OCargaFormDet />} />
 
           <Route path="/ocarga/:ano/:numero/:tipo/edit" element={<OCargaForm />} />
+          <Route path="/ocargamovil/:ano/:numero/:tipo/edit" element={<OCargaFormMovil />} />
           <Route path="/ocargadet/:fecha_ini/:fecha_proceso" element={<OCargaList />} />
           
           { /* Agregar desde Panel (un registro01 Libre)

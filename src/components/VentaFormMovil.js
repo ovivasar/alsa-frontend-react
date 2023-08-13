@@ -13,6 +13,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShippingTwoTone';
 import { useAuth0 } from '@auth0/auth0-react'; //new para cargar permisos luego de verificar registro en bd
 import logo from '../alsa.png';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import numeral from 'numeral';
 
 import swal from 'sweetalert';
 
@@ -89,7 +90,7 @@ export default function VentaFormMovil() {
     y = y - 10;
 
     // Draw column headers
-    page.drawText('PEDIDO: '+ params.cod+"-"+params.serie+"-"+params.num, { x:220, y, size: 16 });
+    page.drawText(venta.tipo_op + ": "+ params.cod+"-"+params.serie+"-"+params.num, { x:220, y, size: 16 });
     y=y-12; //aumentamos linea nueva
     y=y-5; //aumentamos linea nueva
 
@@ -109,8 +110,7 @@ export default function VentaFormMovil() {
     page.drawRectangle({
       x: margin,
       y: y,
-      //width: (page.getWidth()-margin-50), //TODA ANCHO DE LA HOJA
-      width: 210+30+210+30,
+      width: (page.getWidth()-margin-50), //TODA ANCHO DE LA HOJA
       height: (lineHeight+7),
       borderWidth: 1,
       //color: rgb(0.778, 0.778, 0.778),
@@ -147,6 +147,7 @@ export default function VentaFormMovil() {
     let row = 1;
     let espaciadoDet = 0; //iniciamos en la 1era fila
     
+    let precio_total = 0;
     espaciadoDet = espaciadoDet+20; ///NEW
     registrosdet.forEach((person) => {
       const text = `${person.descripcion}`;
@@ -167,8 +168,14 @@ export default function VentaFormMovil() {
       page.drawText(person.unidad_medida?.toString() ?? "", { x:x+40, y:y+4-espaciadoDet, size: 12, font }); //Actualizar urgente
       page.drawText(text, { x:x+80, y:y+4-espaciadoDet, size: 12, font }); //Texto de Titulo de Barra ()
       page.drawText(person.moneda?.toString() ?? "", { x:x+410, y:y+4-espaciadoDet, size: 12, font }); //Actualizar urgente
-      page.drawText(person.precio_unitario?.toString() ?? "", { x:x+440, y:y+4-espaciadoDet, size: 12, font }); //Actualizar urgente
+      page.drawText(numeral(person.precio_unitario).format('0,0.00')?.toString() ?? "", { x:x+440, y:y+4-espaciadoDet, size: 12, font }); //Actualizar urgente
       
+      precio_total = precio_total + person.precio_unitario*person.cantidad;
+      page.drawText("IGV% "+person.porc_igv.toString(), { x:x+440, y:textY-espaciadoDet, size: 10, font }); //igv
+      //No usaremos campo base, para pedidos
+      //page.drawText("BAS.", { x:x+410, y:textY-espaciadoDet, size: 10, font }); //igv
+      //page.drawText(numeral(person.precio_unitario/(1+person.porc_igv/100))?.format('0,0.00').toString() ?? "", { x:x+440, y:textY-espaciadoDet, size: 10, font,color:rgb(0,0,0.7) }); //Actualizar urgente
+
       page.drawText("ENTREGA", { x:x, y:textY-espaciadoDet, size: 7 });
       page.drawText("PLACA", { x:x+80, y:textY-espaciadoDet, size: 7 });
       page.drawText("TRANSPORTE", { x:x+130, y:textY-espaciadoDet, size: 7 });
@@ -204,6 +211,7 @@ export default function VentaFormMovil() {
       espaciadoDet = espaciadoDet+15;
       page.drawText("FACT. RUC", { x, y:textY-espaciadoDet, size: 7 });
       page.drawText("FACT. RAZON SOCIAL", { x:x+80, y:textY-espaciadoDet, size: 7 });
+      page.drawText("FACT.", { x:x+450, y:textY-espaciadoDet, size: 7 });
 
       espaciadoDet = espaciadoDet+15;
       if (person.ref_documento_id===null) {
@@ -216,11 +224,17 @@ export default function VentaFormMovil() {
       }else{
         page.drawText(person.ref_razon_social, { x:x+80, y: textY-espaciadoDet, size: 10, font });
       }
-      
+      page.drawText(numeral(person.precio_unitario*person.cantidad).format('0,0.00'), { x:x+440, y: textY-espaciadoDet, size: 10, font });
+
       //al final del bucle, aumentamos una linea simple :) claro pi ...
       espaciadoDet = espaciadoDet+50;
       row++;
     });
+    
+    //Linea del total facturado, solo para casos que sea misma moneda en todos los detalles
+    //en este caso, la facturacion es por cada detalle, saludos terricolas
+    //page.drawText(numeral(precio_total).format('0,0.00'), { x:x+440, y: y-espaciadoDet, size: 10, font });
+
     //Final
     page.drawRectangle({
       x: margin,
@@ -564,34 +578,44 @@ export default function VentaFormMovil() {
       registrosdet.map((indice) => (
         indice ?
         <div>
-          <Card sx={{mt:0.1}}
+        <Card sx={{mt:0.1}}
                 style={{
                   background:'#1e272e',
                   padding:'1rem',
-                  height:'3rem',
+                  height:'2rem',
                   marginTop:".2rem"
                 }}
                 key={indice.ref_documento_id}
-          >
+        >
           
           <CardContent style={{color:'white'}}>
-            
+
           <Grid container spacing={3}
                 direction="column"
                 //alignItems="center"
                 sx={{ justifyContent: 'flex-start' }}
           >
-              
+
               <Grid container spacing={0}
                 alignItems="center"
               > 
                   <Grid item xs={12} sm={6}>
                   
                   { pVenta010203 ? 
+                    //Editar Producto 
                     (      
                     <IconButton color="primary" aria-label="upload picture" component="label" size="small"
                                 sx={{ textAlign: 'left' }}
-                                onClick = {()=> navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)}
+                                onClick = {()=> {
+                                          //navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)
+                                        if (venta.tipo_op=="TRASLADO"){
+                                          navigate(`/ventadettraslado/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)
+                                        }else{
+                                          navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)
+                                        }
+
+                                        }
+                                      }
                     >
                     <BorderColorIcon />
                     </IconButton>
@@ -606,6 +630,7 @@ export default function VentaFormMovil() {
                   }
 
                   { pVenta010204 ? 
+                    //Modificar Transporte 010204
                     (      
                     <IconButton color="primary" aria-label="upload picture" component="label" size="small"
                                 sx={{ textAlign: 'left' }}
@@ -625,6 +650,7 @@ export default function VentaFormMovil() {
                   }
 
                   { pVenta010205 ? 
+                    //Eliminar Producto
                     (      
                     <IconButton color="warning" aria-label="upload picture" component="label" size="small"
                                 sx={{ textAlign: 'left' }}
@@ -656,11 +682,11 @@ export default function VentaFormMovil() {
                   </Grid>
 
               </Grid>
-              
+
           </Grid>
 
-            </CardContent>
-          </Card>
+          </CardContent>
+        </Card>
         </div>
         : null
       ))
@@ -698,6 +724,33 @@ export default function VentaFormMovil() {
                             //alignItems="center"
                             justifyContent="center"
                       >
+                            <Box sx={{ minWidth: 120 }}>
+                            <FormControl fullWidth>
+                              <InputLabel id="demo-simple-select-label" 
+                                                inputProps={{ style:{color:'white'} }}
+                                                InputLabelProps={{ style:{color:'white'} }}
+                                                sx={{mt:1, color:'green'}}
+                              >OPERACION</InputLabel>
+                              <Select
+                                      labelId="operacion_select"
+                                      size="small"
+                                      id={venta.tipo_op}
+                                      value={venta.tipo_op}
+                                      name="tipo_op"
+                                      sx={{display:'block',
+                                      margin:'.5rem 0', color:"white"}}
+                                      label="Operacion"
+                                      onChange={handleChange}
+                                    >
+                                      {   
+                                          operacion_select.map(elemento => (
+                                          <MenuItem key={elemento.tipo_op} value={elemento.tipo_op}>
+                                            {elemento.tipo_op}
+                                          </MenuItem>)) 
+                                      }
+                              </Select>
+                            </FormControl>
+                            </Box>
 
                           {/* primera linea--------------------------------- */}
                           <FormControl fullWidth sx={{margin:'-1rem 0'}}>
@@ -978,12 +1031,19 @@ export default function VentaFormMovil() {
                           <Grid container spacing={0.5}>
                               <Grid item xs={2}>
                                   { pVenta010202 ?
+                                    //Agregar Detalle Producto (Venta)
                                     (
                                       <IconButton color="primary" aria-label="upload picture" component="label" size="small"
                                           sx={{margin:'.5rem 0'}}
                                           onClick = {()=> {
-                                            navigate(`/ventadet/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
-                                                          }
+                                                //navigate(`/ventadet/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
+                                                if (venta.tipo_op=="TRASLADO"){
+                                                  navigate(`/ventadettraslado/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
+                                                }else{
+                                                  navigate(`/ventadet/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
+                                                }
+    
+                                                }
                                           }
                                       >
                                       <AddBoxRoundedIcon />
@@ -1001,6 +1061,7 @@ export default function VentaFormMovil() {
 
                               <Grid item xs={8}>
                                 { pVenta010201 ?
+                                  //Grabar Datos Cabecera (Venta)
                                   (
                                   <Button variant='contained' 
                                           color='primary' 

@@ -308,7 +308,8 @@ export default function OCargaFormDet() {
       zona_entrega:'',    //ventas referencial, no visible
 
       tipo:'',    //P=Programacion  E=Ejecucion  NEWWWW
-      registrado:'1'
+      registrado:'1',
+      op_observacion:'' //New para 1era parte DAtos Operacion
   })
 
   const handleSubmit = async(e) => {
@@ -455,6 +456,7 @@ export default function OCargaFormDet() {
                 descripcion:data.descripcion,
                 cantidad:data.cantidad, 
                 unidad_medida:data.unidad_medida, //new
+                op_observacion:data.op_observacion, //new Agosto2023
                 operacion:data.operacion,
                 tr_placa:data.tr_placa, 
                 tr_placacargado:data.tr_placacargado, 
@@ -734,6 +736,17 @@ export default function OCargaFormDet() {
                                       sx={{mt:0}}
                                       name="tr_placacargado"
                                       value={ocargaDet.tr_placacargado}
+                                      onChange={handleChange}
+                                      inputProps={{ style:{color:'white'} }}
+                                      InputLabelProps={{ style:{color:'white'} }}
+                                />
+
+                                <TextField variant="outlined" 
+                                      label="OBSERVACIONES OP"
+                                      fullWidth
+                                      sx={{mt:0}}
+                                      name="op_observacion"
+                                      value={ocargaDet.op_observacion}
                                       onChange={handleChange}
                                       inputProps={{ style:{color:'white'} }}
                                       InputLabelProps={{ style:{color:'white'} }}

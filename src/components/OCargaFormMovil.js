@@ -17,7 +17,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
 import { useAuth0 } from '@auth0/auth0-react'; //new para cargar permisos luego de verificar registro en bd
 
-export default function OCargaForm() {
+export default function OCargaFormMovil() {
   const isSmallScreen = useMediaQuery('(max-width: 600px)');
   //const back_host = process.env.BACK_HOST || "http://localhost:4000";
   const back_host = process.env.BACK_HOST || "https://alsa-backend-js-production.up.railway.app";  
@@ -532,49 +532,6 @@ export default function OCargaForm() {
                   
                 </Grid>
                 
-                <Grid item xs={0.5}>
-                  
-                </Grid>
-
-                <Grid item xs={0.5}>
-                  
-                </Grid>
-
-                <Grid item xs={0.5}>
-                  
-                </Grid>
-
-                <Grid item xs={1.5}>
-                  OPERACION
-                </Grid>
-
-                <Grid item xs={1}>
-                  CANT.
-                </Grid>
-
-                <Grid item xs={0.5}>
-                  UND
-                </Grid>
-
-                <Grid item xs={2}>
-                  PRODUCTO
-                </Grid>
-
-                <Grid item xs={1.5}>
-                  CLIENTE
-                </Grid>
-
-                <Grid item xs={1}>
-                  PLACA VACIO
-                </Grid>
-
-                <Grid item xs={1}>
-                  PLACA CARGADO
-                </Grid>
-
-                <Grid item xs={1.5}>
-                  ENTREGA
-                </Grid>
                 
 
             </Grid>
@@ -587,21 +544,30 @@ export default function OCargaForm() {
       {
       registrosdet.map((indice) => (
      
-            <Card sx={{mt:0.1}}
-            style={{
-              background:'#1e272e',
-              padding:'0.5rem',
-              height:'3rem',
-              marginTop:".2rem"
-            }}
-            key={indice.ref_documento_id}
-            >
+        <Card sx={{mt:0.1}}
+        style={{
+            background:'#1e272e',
+            padding:'1rem',
+            height:'3.8rem',
+            marginTop:".2rem"
+        }}
+        key={indice.ref_documento_id}
+        >
           
           <CardContent style={{color:'white', padding:'0.5rem'}}>
 
-              <Grid container spacing={0.5}>
+          <Grid container spacing={3}
+                direction="column"
+                //alignItems="center"
+                sx={{ justifyContent: 'flex-start' }}
+          >
 
-                  <Grid item xs={0.5}>
+            <Grid container spacing={0}
+                alignItems="center"
+            >
+              
+                <Grid item xs={5} sm={6}>
+
                     <Tooltip title="DATOS Carga/Descarga">
 
                     { ( (params.tipo==="P" && pOCargaP0201_02_01) || (params.tipo==="E" && pOCargaP0202_02_01) ) ? 
@@ -622,9 +588,7 @@ export default function OCargaForm() {
                     }
 
                     </Tooltip>
-                  </Grid>
                   
-                  <Grid item xs={0.5}>
                     <Tooltip title="DATOS Almacen">
 
                     { ( params.tipo==="E" && pOCargaP0202_02_02 ) ? 
@@ -645,9 +609,7 @@ export default function OCargaForm() {
                     }
 
                     </Tooltip>  
-                  </Grid>
                   
-                  <Grid item xs={0.5}>
                     <Tooltip title="DATOS Peso/Estibaje">
 
                     { ( params.tipo==="E" && pOCargaP0202_02_03 ) ? 
@@ -666,13 +628,10 @@ export default function OCargaForm() {
                       </IconButton>
                       )
                     }
-
                     </Tooltip>
-                  </Grid>
 
-                  <Grid item xs={0.5}>
 
-                  { ( (params.tipo==="P" && pOCargaP0201_02_04) || (params.tipo==="E" && pOCargaP0202_02_04) ) ? 
+                    { ( (params.tipo==="P" && pOCargaP0201_02_04) || (params.tipo==="E" && pOCargaP0202_02_04) ) ? 
                     (      
                     <IconButton color="warning" aria-label="upload picture" component="label" size="small"
                                 onClick = { () => confirmaEliminacionDet(params.ano
@@ -691,61 +650,45 @@ export default function OCargaForm() {
                       )
                     }
 
-                  </Grid>
+                </Grid>
 
-                  <Grid item xs={1.5}>
+                <Grid item xs={4} sm={3}>
                       <Typography fontSize={13} marginTop="0rem" >
-                      {indice.operacion}
+                      {indice.operacion} 
                       </Typography>
-                  </Grid>
-
-                  <Grid item xs={1}>
-                      <Typography fontSize={15} marginTop="0" >
-                        {indice.cantidad}
-                      </Typography>
-                  </Grid>
-
-                  <Grid item xs={0.5}>
-                      <Typography fontSize={15} marginTop="0" >
-                        {indice.unidad_medida}
-                      </Typography>
-                  </Grid>
-
-                  <Grid item xs={2}>
-                      <Typography fontSize={13} marginTop="0" >
-                        {indice.descripcion}
-                      </Typography>
-                  </Grid>
-
-                  <Grid item xs={1.5}>
+                </Grid>
+                <Grid item xs={3} sm={3}>
                       <Typography fontSize={13} marginTop="0rem" >
-                        {indice.ref_razon_social}
+                      {indice.cantidad} {indice.unidad_medida} 
                       </Typography>
-                  </Grid>
+                </Grid>
 
-                  <Grid item xs={1}>
-                      <Typography fontSize={13} marginTop="0" >
-                        {indice.tr_placa}
+                <Grid item xs={12} sm={3} textAlign='center'>
+                      <Typography fontSize={13} marginTop="0rem" >
+                      {indice.descripcion} 
                       </Typography>
-                  </Grid>
-
-                  <Grid item xs={1}>
-                      <Typography fontSize={13} marginTop="0" >
-                        {indice.tr_placacargado}
+                </Grid>
+                <Grid item xs={6} sm={3} textAlign='center'>
+                      <Typography fontSize={13} marginTop="0rem" color='darkturquoise'>
+                      {indice.tr_placa}
                       </Typography>
-                  </Grid>
-
-                  <Grid item xs={1.5}>
-                      <Typography fontSize={13} marginTop="0" >
-                        {indice.zona_entrega} {indice.pedido}
+                </Grid>
+                <Grid item xs={6} sm={3} textAlign='center'>
+                      <Typography fontSize={13} marginTop="0rem" color='darkturquoise'>
+                      {indice.tr_placacargado}
                       </Typography>
-                  </Grid>
+                </Grid>
 
+                <Grid item xs={12} sm={3} textAlign='center'>
+                      <Typography fontSize={13} marginTop="0rem" >
+                      {indice.pedido} {indice.zona_entrega}
+                      </Typography>
+                </Grid>
 
-              </Grid>
-
-              </CardContent>
-          </Card>
+            </Grid>
+          </Grid>
+          </CardContent>
+        </Card>
 
 
       ))
