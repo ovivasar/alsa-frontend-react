@@ -642,6 +642,7 @@ export default function OCargaFormDet() {
                                 />
                                 <TextField variant="outlined" 
                                     label="OBSERVACIONES"
+                                    multiline
                                     size="small"
                                     sx={{mt:1}}
                                     fullWidth

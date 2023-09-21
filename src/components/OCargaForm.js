@@ -9,6 +9,7 @@ import Tooltip from '@mui/material/Tooltip';
 import DnsTwoToneIcon from '@mui/icons-material/DnsTwoTone';
 import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
 import SummarizeIcon from '@mui/icons-material/Summarize';
+import AutoAwesomeMotionIcon from '@mui/icons-material/AutoAwesomeMotion';
 import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
 
 import swal from 'sweetalert';
@@ -137,16 +138,22 @@ export default function OCargaForm() {
       //Calculamos el punto x, acorde al largo de la razon social (centradito chochera ... claro pi cojuda)
       centro = (page.getWidth()/2) - (person.operacion.toString().length)/2 - margin/1.2;
       page.drawText(text, { x:centro, y:y+4-espaciadoDet, size: 12, font }); //Texto de Titulo de Barra (Operacion)
-      //Acompañamos horas inicio y fin en la misma coordenada y 
+      let sacos;
+      if (person.sacos_real===null){
+        sacos = "0 SACOS";
+      }
+      else{
+        sacos = person.sacos_real.toString() + " SACOS";
+      }
+      page.drawText(sacos, { x:x+300, y:y+4-espaciadoDet, size: 10, font }); //new
+
+      //Acompañamos horas inicio y fin en la misma coordenada
       page.drawText("HORA INI: ", { x, y:y+4-espaciadoDet, size: 10, font });
       page.drawText(person.e_hora_ini ?? "-", { x:x+50, y:y+4-espaciadoDet, size: 10, font });
       page.drawText("HORA FIN: ", { x:x+400, y:y+4-espaciadoDet, size: 10, font });
       page.drawText(person.e_hora_fin ?? "-", { x:x+450, y:y+4-espaciadoDet, size: 10, font });
 
-
       //1ERA LINEA
-      //page.drawText("PRODUCTO", { x, y:textY-espaciadoDet, size: 8 });
-      //Desglosar 2da Linea, DECREMENTAR LA POS Y UNA LINEA MAS ABAJO //NEW
       //espaciadoDet = espaciadoDet+10; ///NEW
       page.drawText(person.descripcion ?? "", { x, y: textY-espaciadoDet, size: 10, font });
 
@@ -199,7 +206,7 @@ export default function OCargaForm() {
       //3ERA LINEA
       espaciadoDet = espaciadoDet+15;
       page.drawText("OBSERVACIONES OP:", { x, y:textY-espaciadoDet, size: 8 });
-      page.drawText("SACOS REAL", { x:x+400, y: textY-espaciadoDet, size: 8, font });
+      //page.drawText("SACOS REAL", { x:x+400, y: textY-espaciadoDet, size: 8, font });
       if (person.op_observacion===null) {
         page.drawText("-", { x:x+100, y: textY-espaciadoDet, size: 10, font });
       }else{
@@ -207,7 +214,7 @@ export default function OCargaForm() {
       }
 
       espaciadoDet = espaciadoDet+15;
-      page.drawText(person.sacos_real?.toString() ?? "0", { x:x+400, y: textY-espaciadoDet, size: 10, font });
+      //page.drawText(person.sacos_real?.toString() ?? "0", { x:x+400, y: textY-espaciadoDet, size: 10, font });
 
       //4ta LINEA new
       //espaciadoDet = espaciadoDet+15;
@@ -215,7 +222,7 @@ export default function OCargaForm() {
       if (person.e_observacion===null) {
         page.drawText("-", { x:x+100, y: textY-espaciadoDet, size: 10, font });
       }else{
-        page.drawText(person.e_observacion, { x:x+100, y: textY-espaciadoDet, size: 10, font });
+        page.drawText(person.e_observacion, { x:x+100, y: textY-espaciadoDet, size: 8, font, lineHeight: 8 }); //lineHeight es para la separacion de lineas cuando existe ENTER ;)
       }
 
       //al final del bucle, aumentamos una linea simple :) claro pi ...
@@ -236,15 +243,6 @@ export default function OCargaForm() {
     page.drawText("ENCARGADO ALMACEN", { x:100, y:y-espaciadoDet-20, size: 8, font });
     page.drawText("ENCARGADO DESPACHO", { x:350, y:y-espaciadoDet-20, size: 8, font });
 
-    // Creamos un enlace para descargar el archivo
-    /*const pdfBytes = await pdfDoc.saveAsBase64({ dataUri: true });
-    const link = document.createElement('a');
-    link.href = pdfBytes;
-    link.download = 'ordencompra.pdf';
-    link.target = '_blank'; // Abrir el PDF en una nueva pestaña
-    document.body.appendChild(link);
-    link.click();*/
-
     const pdfBytes = await pdfDoc.save();
 
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -257,11 +255,223 @@ export default function OCargaForm() {
     //link.click();
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////
+  const createPdfIndividual = async () => {
+    const pdfDoc = await PDFDocument.create()
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
+    // Add logo to the top of the page
+    //const logoImage = pdfDoc.embedPng(logo);
+    const pngImage = await pdfDoc.embedPng(logo);
+    const pngDims = pngImage.scale(0.25)
+
+    const fontSize = 12;
+    const lineHeight = fontSize * 1.2;
+    let margin = 20;
+    let x = margin;
+    let y = 800;
+    
+    y = y - 10;
+    y=y-8; //aumentamos linea nueva
+    y=y-19; //aumentamos linea nueva
+    ////////////////////////////////////////////////////////////////////
+    y=y-12; //aumentamos linea nueva
+    ////////////////////////////////////////////////////////////////////
+    y=y-5; //aumentamos linea nueva
+    y=y-12; //aumentamos linea nueva
+    //Calculamos el punto x, acorde al largo de la razon social (centradito chochera ... claro pi cojuda)
+
+    x = 100;
+    margin = 100;
+    
+    y=y-12; //aumentamos linea nueva
+    
+    y=y-12; //aumentamos linea nueva
+    y=y-12; //aumentamos linea nueva
+    y=y-5; //aumentamos linea nueva
+    
+    ////////////////////////////////////////////////////////////////////
+    // Draw table data
+    y = 790;
+    let espaciadoDet = 0; //iniciamos en la 1era fila
+    //tabladet.forEach((person) => {
+      console.log("antes del for", tabladet);
+    for (let i = 0; i < 3; i++) {
+
+      page.drawImage(pngImage, {
+        //x: page.getWidth() / 2 - pngDims.width / 2 + 75,
+        //y: page.getHeight() / 2 - pngDims.height + 250,
+        x: 0,
+        y:y+21-espaciadoDet-10,
+        width: pngDims.width,
+        height: pngDims.height,
+      })
+  
+      page.drawText("CLIENTE: " + ocarga.ref_razon_social?.toString() ?? "", { x:100, y:y+21-espaciadoDet, size: 8 });
+      //const text = `${tabladet.operacion}`;
+      const text = tabladet[0].operacion;
+      const textX = x;
+      const textY = y - lineHeight; //corregimos aca, porque se duplicaba espacio en cada grupo
+      page.drawRectangle({
+        x: margin,
+        y: y-espaciadoDet,
+        width: (page.getWidth()-margin-50), //TODA ANCHO DE LA HOJA
+        height: (lineHeight+2),
+        borderWidth: 1,
+        color: rgb(0.778, 0.778, 0.778),
+        borderColor: rgb(0.8,0.8,0.8)
+      });
+      //Calculamos el punto x, acorde al largo de la razon social (centradito chochera ... claro pi cojuda)
+      let centro;
+      centro = (page.getWidth()/2) - (tabladet[0].operacion.toString().length)/2 - margin/1.2;
+      page.drawText(text, { x:centro, y:y+4-espaciadoDet, size: 10, font }); //Texto de Titulo de Barra (Operacion)
+      let sacos;
+      if (tabladet[0].sacos_real===null){
+        sacos = "0 SACOS";
+      }
+      else{
+        sacos = tabladet[0].sacos_real.toString() + " SACOS";
+      }
+      page.drawText(sacos, { x:x+300-20, y:y+4-espaciadoDet, size: 10, font }); //new
+
+      //Acompañamos horas inicio y fin en la misma coordenada
+      page.drawText("HORA INI: ", { x, y:y+4-espaciadoDet, size: 8, font });
+      page.drawText(tabladet[0].e_hora_ini ?? "-", { x:x+50, y:y+4-espaciadoDet, size: 8, font });
+      page.drawText("HORA FIN: ", { x:x+400-20, y:y+4-espaciadoDet, size: 8, font });
+      page.drawText(tabladet[0].e_hora_fin ?? "-", { x:x+450-20, y:y+4-espaciadoDet, size: 8, font });
+
+      //1ERA LINEA
+      page.drawText(tabladet[0].descripcion ?? "", { x, y: textY-espaciadoDet, size: 10, font });
+      page.drawText(ocarga.numero.toString(), { x:margin-80, y: textY-espaciadoDet+20-10, size: 15 });
+      page.drawText(ocarga.fecha.toString(), { x:margin-80, y: textY-espaciadoDet-10+20-10, size: 10 });
+      //Rectangulo 01
+      page.drawRectangle({
+        x: 10,
+        y: textY-espaciadoDet-24-10,
+        width: 80, //TODA ANCHO DE LA HOJA
+        height: 30,
+        borderWidth: 1,
+        //color: rgb(0.778, 0.778, 0.778),
+        borderColor: rgb(0.8,0.8,0.8)
+      });
+      page.drawText("ALMACEN", { x:20, y: textY-espaciadoDet-2-10, size: 7, font });
+
+      //Rectangulo 02
+      page.drawRectangle({
+        x: 10,
+        y: textY-espaciadoDet-60-10,
+        width: 80, //TODA ANCHO DE LA HOJA
+        height: 30,
+        borderWidth: 1,
+        //color: rgb(0.778, 0.778, 0.778),
+        borderColor: rgb(0.8,0.8,0.8)
+      });
+      page.drawText("DESPACHO", { x:20, y: textY-espaciadoDet-38-10, size: 7, font });
+
+      espaciadoDet = espaciadoDet+12; //NEW
+      page.drawText("PEDIDO", { x, y:textY-espaciadoDet, size: 8 });//NEW
+      page.drawText("CANTIDAD", { x:x+100-20, y:textY-espaciadoDet, size: 8 });
+      page.drawText("UNIDAD", { x:x+200-20, y:textY-espaciadoDet, size: 8 });
+      page.drawText("PLACA VACIO", { x:x+300-20, y:textY-espaciadoDet, size: 8 });
+      page.drawText("PLACA CARGADO", { x:x+400-20, y:textY-espaciadoDet, size: 8 });
+      
+      espaciadoDet = espaciadoDet+11;
+
+      page.drawText(tabladet[0].pedido?.toString() ?? "", { x, y: textY-espaciadoDet, size: 10, font });
+      page.drawText(tabladet[0].cantidad.toString(), { x:x+100-20, y: textY-espaciadoDet, size: 10, font });
+      page.drawText(tabladet[0].unidad_medida?.toString() ?? "", { x:x+200-20, y: textY-espaciadoDet, size: 10, font }); //Actualizar urgente
+      if (tabladet[0].tr_placa===null) {
+        page.drawText("-", { x:x+300-20, y: textY-espaciadoDet, size: 10, font });
+      }else{
+        page.drawText(tabladet[0].tr_placa, { x:x+300-20, y: textY-espaciadoDet, size: 10, font });
+      }
+      if (tabladet[0].tr_placacargado===null) {
+        page.drawText("-", { x:x+400-20, y: textY-espaciadoDet, size: 10, font });
+      }else{
+        page.drawText(tabladet[0].tr_placacargado?.toString() ?? "", { x:x+400-20, y: textY-espaciadoDet, size: 10, font });
+      }
+
+      //2DA LINEA
+      espaciadoDet = espaciadoDet+11;
+      page.drawText("LOTE CARGA", { x, y:textY-espaciadoDet, size: 8 });
+      page.drawText("LOTE DESCARGA", { x:x+200-20, y:textY-espaciadoDet, size: 8 });
+      page.drawText("ESTIBADORES", { x:x+400-20, y:textY-espaciadoDet, size: 8 });
+
+      espaciadoDet = espaciadoDet+11;
+      if (tabladet[0].lote_procedencia===null) {
+        page.drawText("-", { x, y: textY-espaciadoDet, size: 10, font });
+      }else{
+        page.drawText(tabladet[0].lote_procedencia, { x, y: textY-espaciadoDet, size: 10, font, color:rgb(0,0.7,0) });
+      }
+      if (tabladet[0].lote_asignado===null) {
+        page.drawText("-", { x:x+200-20, y: textY-espaciadoDet, size: 10, font });
+      }else{
+        page.drawText(tabladet[0].lote_asignado, { x:x+200-20, y: textY-espaciadoDet, size: 10, font, color:rgb(0,0.2,0.8) });
+      }
+      if (tabladet[0].e_estibadores===null) {
+        page.drawText("-", { x:x+400-20, y: textY-espaciadoDet, size: 10, font });
+      }else{
+        page.drawText(tabladet[0].e_estibadores, { x:x+400-20, y: textY-espaciadoDet, size: 10, font });
+      }
+      
+      //3ERA LINEA
+      espaciadoDet = espaciadoDet+11;
+      page.drawText("OBS OP:", { x, y:textY-espaciadoDet, size: 8 });
+      //page.drawText("SACOS REAL", { x:x+400, y: textY-espaciadoDet, size: 8, font });
+      if (tabladet[0].op_observacion===null) {
+        page.drawText("-", { x:x+100-20, y: textY-espaciadoDet, size: 10, font });
+      }else{
+        page.drawText(tabladet[0].op_observacion, { x:x+100-20, y: textY-espaciadoDet, size: 10, font });
+      }
+
+      espaciadoDet = espaciadoDet+11;
+
+      //4ta LINEA new
+      page.drawText("OBSERVACIONES:", { x, y:textY-espaciadoDet, size: 8 });
+      if (tabladet[0].e_observacion===null) {
+        page.drawText("-", { x:x+100-20, y: textY-espaciadoDet, size: 10, font });
+      }else{
+        page.drawText(tabladet[0].e_observacion, { x:x+100-20, y: textY-espaciadoDet, size: 8, font, lineHeight: 8 }); //lineHeight es para la separacion de lineas cuando existe ENTER ;)
+      }
+      espaciadoDet = espaciadoDet+11;
+      
+      page.drawLine({
+        start: { x: 10, y: textY-espaciadoDet },
+        end: { x: 550, y: textY-espaciadoDet },
+        thickness: 0.1, // Grosor de la línea
+        color: rgb(0.8, 0.8, 0.8), // Color de la línea
+        dash: [2, 2] // Arreglo de valores que especifican el patrón entrecortado (5 unidades dibujadas, 5 unidades no dibujadas)
+      });
+      //al final del bucle, aumentamos una linea simple :) claro pi ...
+      espaciadoDet = espaciadoDet+45;
+    };
+    //});
+    
+    const pdfBytes = await pdfDoc.save();
+
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    // Crea una URL de objeto para el archivo Blob
+    const url = URL.createObjectURL(blob);
+    // Abre la URL en una nueva pestaña del navegador
+    window.open(url, '_blank');
+
+    // Hacemos clic en el enlace para descargar el archivo
+    //link.click();
+  }
+
+  const filtrarImprimePDF=(strItem)=>{
+    var resultadosBusqueda = registrosdet.filter((elemento) => {
+      return elemento.item.toString().toLowerCase().includes(strItem.toLowerCase());
+    });
+    //Este codigo, activa su useEffect respectivo, asi funciona reactjs ;) saludos
+    setTabladet(resultadosBusqueda);    
+ }
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  const [updateTrigger, setUpdateTrigger] = useState({});
   const [registrosdet,setRegistrosdet] = useState([]);
-  //const fecha_actual = new Date();
+  const [tabladet,setTabladet] = useState([]);  //Copia de los registros: Para tratamiento de filtrado  
 
   const [ocarga,setOCarga] = useState({
       id_empresa:'1',  
@@ -364,8 +574,13 @@ export default function OCargaForm() {
       cargaPermisosMenuComando('02'); //Alimentamos el useState permisosComando
       //console.log(permisosComando);
     }
-    
   },[params.numero, isAuthenticated, user]);
+
+  useEffect( ()=> {
+    //console.log("useEffect, para click reporte que cambia de useState constantemente");
+    //console.log(tabladet);
+    createPdfIndividual();
+  },[tabladet]);
 
   //Rico evento change
   const handleChange = e => {
@@ -392,7 +607,7 @@ export default function OCargaForm() {
     const res = await fetch(`${back_host}/ocargadettipo/${ano}/${numero}/${tipo}`);
     const dataDet = await res.json();
     setRegistrosdet(dataDet);
-    //console.log(registrosdet.length);
+    //setTabladet(dataDet); //NEW Copia para tratamiento de filtrado, para click imprimir
     setEditando(true);
   };
 
@@ -601,7 +816,7 @@ export default function OCargaForm() {
 
               <Grid container spacing={0.5}>
 
-                  <Grid item xs={0.5}>
+                  <Grid item xs={0.4}>
                     <Tooltip title="DATOS Carga/Descarga">
 
                     { ( (params.tipo==="P" && pOCargaP0201_02_01) || (params.tipo==="E" && pOCargaP0202_02_01) ) ? 
@@ -624,7 +839,7 @@ export default function OCargaForm() {
                     </Tooltip>
                   </Grid>
                   
-                  <Grid item xs={0.5}>
+                  <Grid item xs={0.4}>
                     <Tooltip title="DATOS Almacen">
 
                     { ( params.tipo==="E" && pOCargaP0202_02_02 ) ? 
@@ -647,7 +862,7 @@ export default function OCargaForm() {
                     </Tooltip>  
                   </Grid>
                   
-                  <Grid item xs={0.5}>
+                  <Grid item xs={0.4}>
                     <Tooltip title="DATOS Peso/Estibaje">
 
                     { ( params.tipo==="E" && pOCargaP0202_02_03 ) ? 
@@ -670,7 +885,7 @@ export default function OCargaForm() {
                     </Tooltip>
                   </Grid>
 
-                  <Grid item xs={0.5}>
+                  <Grid item xs={0.4}>
 
                   { ( (params.tipo==="P" && pOCargaP0201_02_04) || (params.tipo==="E" && pOCargaP0202_02_04) ) ? 
                     (      
@@ -690,7 +905,22 @@ export default function OCargaForm() {
                       </IconButton>
                       )
                     }
+                  </Grid>
 
+                  <Grid item xs={0.4}>
+                    <Tooltip title="IMPRIME OPERACION">
+
+                      <IconButton color="success" aria-label="upload picture" component="label" size="small"
+                                  sx={{ color: 'Highlight' }}
+                                  onClick = {()=> {
+                                    filtrarImprimePDF(indice.item.toString());
+                                    }
+                                  }
+                      >
+                        <AutoAwesomeMotionIcon />
+                      </IconButton>
+
+                    </Tooltip>
                   </Grid>
 
                   <Grid item xs={1.5}>

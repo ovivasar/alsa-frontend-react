@@ -10,11 +10,13 @@ import { Auth0Provider } from '@auth0/auth0-react';
 const domain = "dev-onc8ou0i85qkx5m2.us.auth0.com";
 
 //Version Local
-const clientId = "3QVBxuBR5TU8gNI7kfPZwW4t9P3Occ4m";
+//const clientId = "3QVBxuBR5TU8gNI7kfPZwW4t9P3Occ4m";
 
 //Version Web
 //const clientId = "o7uLYv4yImQjxe5jC0djeMKvguaspdnt";
 
+//Version Railway
+const clientId = "P0z28wkCZJxzLMYbM9DZVf4zWT3K3C9n";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -23,8 +25,9 @@ root.render(
     <Auth0Provider
     domain={domain}
     clientId={clientId}
-    redirectUri="http://localhost:3000/carguio"
+    //redirectUri="http://localhost:3000/carguio"
     //redirectUri="https://alsasrl.com.pe/carguio"
+    redirectUri="https://alsa-frontend-react-production.up.railway.app/"
 
     //authorizationParams={{
     //  redirect_uri: window.location.origin // Utilizamos authorizationParams.redirect_uri en lugar de redirectUri
