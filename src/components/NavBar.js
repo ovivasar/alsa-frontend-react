@@ -10,7 +10,7 @@ import WhereToVoteIcon from '@mui/icons-material/WhereToVote';
 import QrCodeIcon from '@mui/icons-material/QrCode';
 import { blueGrey } from '@mui/material/colors';
 import Tooltip from '@mui/material/Tooltip';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import InsertChartIcon from '@mui/icons-material/InsertChart';
 import SystemSecurityUpdateGoodIcon from '@mui/icons-material/SystemSecurityUpdateGood';
 
 import React, { useState } from 'react';
@@ -201,19 +201,20 @@ export default function NavBar(props) {
 
                     { permisoGuias ?
                     (
-                    <Tooltip title="RESUMEN Guias-Descarguios">
+                    <Tooltip title="RESUMEN Reporte">
                     <IconButton  
                         sx={{
                           color: selectedButton === 'icono04' ? 'primary.main' : blueGrey[300],flexGrow:1
                         }}
                                 component="label" size="large" color="success"
                                 onClick = {()=> {
-                                  navigate(`/ocargadetguiaspendientes/${props.fecha_proceso}`);
+                                  //navigate(`/ocargadetguiaspendientes/${props.fecha_proceso}`);
+                                  navigate(`/ocargadetreportes/${props.fecha_ini}/${props.fecha_proceso}`);
                                   handleClick('icono04');
                                                 }
                                 }
                     >
-                      <AccountBalanceWalletOutlinedIcon />
+                      <InsertChartIcon />
                     </IconButton>
                     </Tooltip>
                     ):(
@@ -337,3 +338,4 @@ export default function NavBar(props) {
     </Box>
   );
 }
+

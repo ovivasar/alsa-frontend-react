@@ -31,6 +31,8 @@ import SeguridadList from "./components/SeguridadList";
 import Inicio from "./components/Inicio";
 import { useState,useEffect } from 'react';
 import OCargaFormMovil from './components/OCargaFormMovil';
+import OCargaListReportes from './components/OCargaListReportes';
+import OCargaListReportesDet from './components/OCargaListReportsDet';
 //import LoginBoton from "./components/LoginBoton" //new
 //import LogoutBoton from "./components/LogoutBoton" //new
 //import LoginPerfil from "./components/LoginPerfil" //new
@@ -135,6 +137,8 @@ function App() {
           <Route path="/ocargadettraslado/:fecha_proceso/:tipo/new" element={<OCargaFormTraslado />} />
 
           <Route path="/ocargadetguiaspendientes/:fecha_proceso" element={<OCargaGuiaPendientesList />} />
+          <Route path="/ocargadetreportes/:fecha_ini/:fecha_proceso" element={<OCargaListReportes />} />
+          <Route path="/ocargadetreportesmas/:fecha_ini/:fecha_proceso/:valor_vista/:codigo" element={<OCargaListReportesDet />} />
           {/*  modo=edit, modo=clon  */}
 
           <Route path="/ventadettraslado/:cod/:serie/:num/:elem/:fecha/new" element={<VentaFormDetTraslado />} />
