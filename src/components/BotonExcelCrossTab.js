@@ -34,7 +34,7 @@ const BotonExcelCrossTab = ({ registrosdet,meses,valorVista }) => {
     A: "Doc Negocios Web  |||  ovivasar@gmail.com  whathsapp +51 954807980",
   };
 
-  const longitudes = [12, 10, 12, 10, 15, 15, 12, 15];
+  const longitudes = [50, 10, 12, 10, 15, 15, 12, 15];
 
   const handleDownload = () => {
     setLoading(true);
