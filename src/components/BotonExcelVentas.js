@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Spinner } from "reactstrap";
 import * as XLSX from "xlsx";
 import { Button } from "@mui/material";
-import ExcelJS from "exceljs"; // Importa la biblioteca exceljs en lugar: Caso Doc Contable
+//import ExcelJS from "exceljs"; // Importa la biblioteca exceljs en lugar: Caso Doc Contable
 
 const BotonExcelVentas = ({ registrosdet }) => {
   const [loading, setLoading] = useState(false);
@@ -10,7 +10,7 @@ const BotonExcelVentas = ({ registrosdet }) => {
   const titulo = [{ A: "Reporte de Ventas" }, {}];
 
   const informacionAdicional = {
-    A: "Doc Negocios Web  >>>  email:ovivasar@gmail.com  whathsapp +51 954807980",
+    A: "Doc Negocios Web  |||  ovivasar@gmail.com  whathsapp +51 954807980",
   };
 
   const longitudes = [12, 10, 12, 10, 15, 15, 12, 15];

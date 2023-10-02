@@ -14,7 +14,7 @@ import '../App.css';
 import 'styled-components';
 
 //import { utils, writeFile } from 'xlsx';
-import BotonExcelEstilizado from "./BotonExcelOCarga";
+import BotonExcelCrossTab from "./BotonExcelCrossTab";
 
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -317,9 +317,9 @@ export default function OCargaListReportes() {
       />
     </Grid>
     <Grid item xs={0.9}>
-      {/*
-      <BotonExcelEstilizado registrosdet={registrosdet} />
-                                */}
+      {
+      <BotonExcelCrossTab registrosdet={registrosdet} meses={meses} valorVista={valorVista} />
+                                }
     </Grid>
     <Grid item xs={1.1}>    
       {/*
