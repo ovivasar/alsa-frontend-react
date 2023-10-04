@@ -84,9 +84,8 @@ const BotonExcelCrossTab = ({ registrosdet,meses,valorVista }) => {
           }, {}),
         },
       ];
-      console.log("meses:", meses);
-      console.log("tabla:", tabla);
-    //2do paso: convierte a float algunas columnas numericas
+
+      //2do paso: convierte a float algunas columnas numericas
     const newData = registrosdet.map((item) => {
         const convertedItem = { descripcion:(item.descripcion),total_cli: parseFloat(item.total_cli), ...item, };
       

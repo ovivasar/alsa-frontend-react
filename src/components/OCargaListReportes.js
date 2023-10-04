@@ -4,7 +4,6 @@ import { Grid, Button,useMediaQuery } from "@mui/material";
 import { useNavigate,useParams } from "react-router-dom";
 import FindIcon from '@mui/icons-material/FindInPage';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
-import Add from '@mui/icons-material/Add';
 
 import Datatable, {createTheme} from 'react-data-table-component';
 import TextField from '@mui/material/TextField';
@@ -20,6 +19,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import { useAuth0 } from '@auth0/auth0-react'; //new para cargar permisos luego de verificar registro en bd
+import ComponenteGraficoExcel from './ComponenteGraficoExcel';
 
 export default function OCargaListReportes() {
   //verificamos si es pantalla pequeña y arreglamos el grid de fechas
@@ -275,6 +275,11 @@ export default function OCargaListReportes() {
     },
   };
 
+  const handleExportGraficoClick = () => {
+    // Llama a la función exportToExcel del componente ChartComponent
+    // Pasando los datos y nombres de columnas adecuados
+    ComponenteGraficoExcel.exportToExcel(registrosdet, meses);
+  };  
   //////////////////////////////////////////////////////////
   useEffect( ()=> {
       console.log(columnas);
@@ -322,16 +327,11 @@ export default function OCargaListReportes() {
                                 }
     </Grid>
     <Grid item xs={1.1}>    
-      {/*
-      <Button variant='contained' 
-              fullWidth
-              color='warning' 
-              sx={{display:'block',
-              margin:'.0rem 0'}}
-              >
-      REGRESAR
-      </Button>
-                              */}
+      {
+      <div>
+      
+      </div>
+                                    }
     </Grid>
   </Grid>
 
@@ -371,8 +371,9 @@ export default function OCargaListReportes() {
       dense={true}
       customStyles={customStyles}
     >
-
     </Datatable>
+    
+    <ComponenteGraficoExcel data={registrosdet} columnNames={meses} />    
 
   </>
   );
