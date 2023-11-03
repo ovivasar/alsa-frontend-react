@@ -30,6 +30,7 @@ export default function VentaFormMovil() {
   ]);
 
   const [zona_select,setZonaSelect] = useState([]);
+  //const [zonaatendido, setZonaAtendido] = useState(''); //new
   const [vendedor_select,setVendedorSelect] = useState([]);
   const [cliente_select,setClienteSelect] = useState([]);
   //////////////////////////////////////////////////////////
@@ -246,7 +247,6 @@ export default function VentaFormMovil() {
       borderColor: rgb(0.8,0.8,0.8)
     });
     
-
     const pdfBytes = await pdfDoc.save();
 
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -286,7 +286,7 @@ export default function VentaFormMovil() {
     if (event.key === '-') {
       setShowModal(false);
     }
-    console.log(event.key);
+    //console.log(event.key);
     if (event.key === 'Enter') {
       //Selecciona el 1er elemento de la lista, en caso no haya filtrado nada
       handleClienteSelect(filteredClientes[0].documento_id, filteredClientes[0].razon_social);
@@ -602,12 +602,11 @@ export default function VentaFormMovil() {
                   <Grid item xs={12} sm={6}>
                   
                   { pVenta010203 ? 
-                    //Editar Producto 
+                    //Editar Detalle Producto (Venta)
                     (      
                     <IconButton color="primary" aria-label="upload picture" component="label" size="small"
                                 sx={{ textAlign: 'left' }}
                                 onClick = {()=> {
-                                          //navigate(`/ventadet/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)
                                         if (venta.tipo_op=="TRASLADO"){
                                           navigate(`/ventadettraslado/${indice.comprobante_original_codigo}/${indice.comprobante_original_serie}/${indice.comprobante_original_numero}/${indice.elemento}/${indice.item}/edit`)
                                         }else{
@@ -1036,7 +1035,6 @@ export default function VentaFormMovil() {
                                       <IconButton color="primary" aria-label="upload picture" component="label" size="small"
                                           sx={{margin:'.5rem 0'}}
                                           onClick = {()=> {
-                                                //navigate(`/ventadet/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
                                                 if (venta.tipo_op=="TRASLADO"){
                                                   navigate(`/ventadettraslado/${venta.comprobante_original_codigo}/${venta.comprobante_original_serie}/${venta.comprobante_original_numero}/${venta.elemento}/${venta.comprobante_original_fecemi}/new`);
                                                 }else{
